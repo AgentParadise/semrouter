@@ -8,6 +8,7 @@ pub mod route;
 pub mod scoring;
 pub mod storage;
 pub mod testing;
+pub(crate) mod time_util;
 
 use config::RouterConfig;
 use decision::{make_decision, RouteDecision};

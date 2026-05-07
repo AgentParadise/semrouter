@@ -24,7 +24,7 @@ impl ExperimentResult {
         config_snapshot: serde_json::Value,
     ) -> Self {
         Self {
-            timestamp: chrono::Utc::now().to_rfc3339(),
+            timestamp: crate::time_util::iso8601_now(),
             embedder: embedder.to_string(),
             total: metrics.total,
             correct: metrics.correct,
@@ -37,7 +37,7 @@ impl ExperimentResult {
 
     pub fn save(&self, experiments_dir: &Path) -> Result<std::path::PathBuf, RouterError> {
         std::fs::create_dir_all(experiments_dir)?;
-        let ts = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        let ts = crate::time_util::compact_now();
         let path = experiments_dir.join(format!("experiment_{ts}.json"));
         std::fs::write(&path, serde_json::to_string_pretty(self)?)?;
         Ok(path)

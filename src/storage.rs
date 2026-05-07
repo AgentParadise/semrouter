@@ -104,7 +104,7 @@ pub fn save_binary_index(
         version: "1.0".to_string(),
         example_count: examples.len(),
         vector_dimension: examples.first().map_or(0, |ex| ex.embedding.len()),
-        created_at: chrono::Utc::now().to_rfc3339(),
+        created_at: crate::time_util::iso8601_now(),
     };
     std::fs::write(&manifest_path, serde_json::to_string_pretty(&manifest)?)?;
 
