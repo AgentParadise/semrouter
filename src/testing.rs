@@ -19,7 +19,9 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 use crate::config::RouterConfig;
-use crate::embedding::{EmbeddingProvider, FastEmbedEmbedder, MockEmbedder};
+use crate::embedding::{EmbeddingProvider, MockEmbedder};
+#[cfg(feature = "fastembed")]
+use crate::embedding::FastEmbedEmbedder;
 use crate::eval::{load_eval_cases, run_eval, EvalMetrics};
 use crate::SemanticRouter;
 
@@ -179,10 +181,20 @@ fn build_embedder_from_config(config: &RouterConfig) -> Box<dyn EmbeddingProvide
     if model == "mock" {
         Box::new(MockEmbedder::new())
     } else if model.starts_with("fastembed/") {
-        Box::new(
-            FastEmbedEmbedder::new()
-                .unwrap_or_else(|e| panic!("EvalSuite: failed to init fastembed: {e}")),
-        )
+        #[cfg(feature = "fastembed")]
+        {
+            Box::new(
+                FastEmbedEmbedder::new()
+                    .unwrap_or_else(|e| panic!("EvalSuite: failed to init fastembed: {e}")),
+            )
+        }
+        #[cfg(not(feature = "fastembed"))]
+        {
+            panic!(
+                "EvalSuite: embedding_model {model:?} requires the `fastembed` feature. \
+                 Enable it in your Cargo.toml or use a custom EmbeddingProvider."
+            );
+        }
     } else {
         panic!(
             "EvalSuite: unsupported embedding_model {model:?}. Use \"mock\" or \"fastembed/...\"."

@@ -12,6 +12,7 @@ pub(crate) mod time_util;
 
 use config::RouterConfig;
 use decision::{make_decision, RouteDecision};
+#[cfg(feature = "fastembed")]
 pub use embedding::FastEmbedEmbedder;
 use embedding::{normalize, EmbeddingProvider};
 use error::RouterError;

@@ -1,3 +1,4 @@
+#![cfg(feature = "fastembed")]
 //! Contract tests: each fixture under tests/fixtures/<name>/ asserts that
 //! EvalSuite meets its declared thresholds. Real fastembed is used.
 //!

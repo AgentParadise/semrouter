@@ -2,10 +2,12 @@ use crate::error::RouterError;
 
 // ── FastEmbedEmbedder ─────────────────────────────────────────────────────────
 
+#[cfg(feature = "fastembed")]
 pub struct FastEmbedEmbedder {
     model: fastembed::TextEmbedding,
 }
 
+#[cfg(feature = "fastembed")]
 impl FastEmbedEmbedder {
     pub fn new() -> Result<Self, RouterError> {
         let model = fastembed::TextEmbedding::try_new(
@@ -17,6 +19,7 @@ impl FastEmbedEmbedder {
     }
 }
 
+#[cfg(feature = "fastembed")]
 impl EmbeddingProvider for FastEmbedEmbedder {
     fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError> {
         let embeddings = self

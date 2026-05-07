@@ -12,13 +12,21 @@ keywords = ["semantic", "router", "embeddings", "fastembed", "routing"]
 [[bin]]
 name = "semrouter"
 path = "src/main.rs"
+required-features = ["cli", "fastembed"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
-clap = { version = "4", features = ["derive"] }
-fastembed = { version = "4", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries"] }
+
+# Optional — enabled by default. Disable with default-features = false.
+fastembed = { version = "4", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries"], optional = true }
+clap = { version = "4", features = ["derive"], optional = true }
+
+[features]
+default = ["fastembed", "cli"]
+fastembed = ["dep:fastembed"]
+cli = ["dep:clap"]
 
 [dev-dependencies]
 tempfile = "3"
