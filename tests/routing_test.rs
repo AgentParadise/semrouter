@@ -1,5 +1,8 @@
+mod common;
+use common::test_embedder::BagOfWordsEmbedder;
+
 use semrouter::decision::DecisionStatus;
-use semrouter::{config::RouterConfig, embedding::MockEmbedder, SemanticRouter};
+use semrouter::{config::RouterConfig, SemanticRouter};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -20,11 +23,11 @@ fn make_test_routes() -> NamedTempFile {
 }
 
 fn make_router(routes_file: &std::path::Path) -> SemanticRouter {
-    // Mock embedder produces lower scores (keyword-bag, not real semantics), so use lower thresholds
+    // BagOfWordsEmbedder produces lower scores (keyword-bag, not real semantics), so use lower thresholds
     let mut config = RouterConfig::default_config();
     config.router.minimum_score = 0.20;
     config.router.minimum_margin = 0.03;
-    let embedder = Box::new(MockEmbedder::new());
+    let embedder = Box::new(BagOfWordsEmbedder::new());
     SemanticRouter::load(config, routes_file, embedder).expect("Failed to load router")
 }
 
@@ -120,7 +123,7 @@ fn high_risk_route_routes_or_falls_below_threshold() {
     let mut config = RouterConfig::default_config();
     config.router.minimum_score = 0.20;
     config.router.minimum_margin = 0.03;
-    let embedder = Box::new(MockEmbedder::new());
+    let embedder = Box::new(BagOfWordsEmbedder::new());
     let router = SemanticRouter::load(config, f.path(), embedder).unwrap();
 
     let decision = router

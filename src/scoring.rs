@@ -81,12 +81,40 @@ pub fn score_routes(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::embedding::{EmbeddingProvider, MockEmbedder};
+    use crate::embedding::{normalize, EmbeddingProvider};
+    use crate::error::RouterError;
     use crate::route::{EmbeddedExample, RiskLevel, RouteExample};
 
+    // Minimal inline keyword-bag embedder for this unit test only.
+    // Keeps scoring.rs free of a dependency on the test-only BagOfWordsEmbedder
+    // in tests/common/ (which is not reachable from src/ unit tests).
+    struct InlineKwEmbed;
+    impl EmbeddingProvider for InlineKwEmbed {
+        fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError> {
+            const KW: &[(&str, usize)] = &[
+                ("debug", 0), ("code", 1), ("error", 2), ("fix", 6), ("rust", 7),
+                ("python", 8), ("compile", 11), ("test", 4),
+                ("save", 16), ("brain", 17), ("note", 18), ("knowledge", 19),
+                ("capture", 20), ("store", 21), ("idea", 22), ("insight", 29),
+            ];
+            let lower = text.to_lowercase();
+            let mut v = vec![0.0f32; 64];
+            for word in lower.split_whitespace() {
+                let word = word.trim_matches(|c: char| !c.is_alphanumeric());
+                for &(kw, dim) in KW {
+                    if word == kw || word.starts_with(kw) {
+                        v[dim] += 1.0;
+                    }
+                }
+            }
+            normalize(&mut v);
+            Ok(v)
+        }
+        fn dimension(&self) -> usize { 64 }
+    }
+
     fn make_example(id: &str, route: &str, text: &str) -> EmbeddedExample {
-        let e = MockEmbedder::new();
-        let embedding = e.embed(text).unwrap();
+        let embedding = InlineKwEmbed.embed(text).unwrap();
         EmbeddedExample {
             example: RouteExample {
                 id: id.to_string(),
@@ -122,8 +150,7 @@ mod tests {
             ),
         ];
 
-        let embedder = MockEmbedder::new();
-        let input = embedder.embed("debug this code error in python").unwrap();
+        let input = InlineKwEmbed.embed("debug this code error in python").unwrap();
         let candidates = score_routes(&input, &examples, 3, &[], 0.0);
 
         assert!(!candidates.is_empty());

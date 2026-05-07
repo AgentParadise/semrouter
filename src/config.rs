@@ -111,13 +111,15 @@ impl RouterConfig {
         Ok(config)
     }
 
-    /// Return a sensible default config suitable for testing with `MockEmbedder`.
+    /// Return a sensible default config. Useful in tests where the caller
+    /// supplies a custom [`EmbeddingProvider`](crate::embedding::EmbeddingProvider)
+    /// directly rather than relying on auto-construction from `embedding_model`.
     pub fn default_config() -> Self {
         RouterConfig {
             router: RouterSection {
                 name: "semrouter".to_string(),
                 version: "0.1.0".to_string(),
-                embedding_model: "mock".to_string(),
+                embedding_model: "fastembed/AllMiniLML6V2".to_string(),
                 vector_dimension: 384,
                 similarity: "cosine".to_string(),
                 top_k: 3,

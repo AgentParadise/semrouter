@@ -8,6 +8,20 @@ with a 0.x convention: breaking changes can land on minor bumps until 1.0.0.
 
 ## [Unreleased]
 
+### Removed (BREAKING: pre-publication cleanup)
+- `MockEmbedder` removed from public API entirely. It was a 64-dim keyword-bag
+  helper for testing routing math, not a real embedder, and its presence in the
+  public surface invited misuse (e.g. accidental CLI default, misleading first
+  impressions). Lifted to `tests/common/test_embedder.rs` as `BagOfWordsEmbedder`,
+  visible only to integration tests.
+- CLI `--embedder mock` flag removed; default is now `--embedder fastembed`.
+- `EvalSuite`'s `embedding_model = "mock"` config string no longer accepted.
+
+### Added
+- `EvalSuite::from_dir_with_embedder(path, Box<dyn EmbeddingProvider>)` for
+  tests that need to inject a fast deterministic embedder without the fastembed
+  model download.
+
 ## [0.1.1] - 2026-05-07
 
 First public release on crates.io. Slimmed dep graph (254 → ~21 lean / ~210 default), polished public API.
@@ -44,7 +58,7 @@ First public release on crates.io. Slimmed dep graph (254 → ~21 lean / ~210 de
   30-second example, BYO-embedder example, decision JSON, contract testing,
   CLI, real performance numbers, status, roadmap.
 - `CONTRIBUTING.md` and issue/PR templates.
-- `src/time_util.rs` — std-only ISO-8601 + compact timestamp formatters,
+- `src/time_util.rs`: std-only ISO-8601 + compact timestamp formatters,
   replacing chrono. Hinnant's `civil_from_days` algorithm.
 
 ### Migration from 0.1.0 (internal preview)

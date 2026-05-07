@@ -1,10 +1,14 @@
+mod common;
+use common::test_embedder::BagOfWordsEmbedder;
+
 use semrouter::testing::{EvalSuite, Thresholds};
 use std::io::Write;
 use tempfile::TempDir;
 
-// MockEmbedder carve-out: this test exercises EvalSuite's wiring (file loading,
-// threshold parsing, pass/fail logic). Real fastembed is used by contract-test
-// fixtures in tests/contract.rs. See CLAUDE.md "Testing principles".
+// BagOfWordsEmbedder carve-out: this test exercises EvalSuite's wiring (file
+// loading, threshold parsing, pass/fail logic) via from_dir_with_embedder.
+// Real fastembed is used by contract-test fixtures in tests/contract.rs.
+// See CLAUDE.md "Testing principles".
 
 fn write_file(dir: &std::path::Path, name: &str, content: &str) {
     let mut f = std::fs::File::create(dir.join(name)).unwrap();
@@ -34,7 +38,7 @@ fn make_fixture_dir() -> TempDir {
     write_file(dir.path(), "router.toml", concat!(
         "[router]\n",
         "name = \"test\"\nversion = \"0.1.0\"\n",
-        "embedding_model = \"mock\"\nvector_dimension = 64\n",
+        "embedding_model = \"fastembed/AllMiniLML6V2\"\nvector_dimension = 384\n",
         "top_k = 1\nminimum_score = 0.01\nminimum_margin = 0.001\n",
         "fallback_route = \"needs_review\"\n",
         "[storage]\nroutes_file=\"routes.jsonl\"\nhard_negatives_file=\"hard_negatives.jsonl\"\n",
@@ -51,7 +55,10 @@ fn make_fixture_dir() -> TempDir {
 #[test]
 fn eval_suite_passes_when_thresholds_met() {
     let dir = make_fixture_dir();
-    let suite = EvalSuite::from_dir(dir.path()).unwrap();
+    let suite = EvalSuite::from_dir_with_embedder(
+        dir.path(),
+        Box::new(BagOfWordsEmbedder::new()),
+    ).unwrap();
     let report = suite.evaluate().unwrap();
     assert!(report.metrics.accuracy >= 0.5);
     assert!(report.metrics.latency.p95_ms < 1000.0);
@@ -61,9 +68,12 @@ fn eval_suite_passes_when_thresholds_met() {
 fn eval_suite_fails_when_accuracy_below_floor() {
     let dir = make_fixture_dir();
     // 1.01 is impossible to reach (accuracy is capped at 1.0), so this threshold
-    // always fires regardless of how well the MockEmbedder routes.
+    // always fires regardless of how well BagOfWordsEmbedder routes.
     write_file(dir.path(), "thresholds.toml", "min_accuracy = 1.01\n");
-    let suite = EvalSuite::from_dir(dir.path()).unwrap();
+    let suite = EvalSuite::from_dir_with_embedder(
+        dir.path(),
+        Box::new(BagOfWordsEmbedder::new()),
+    ).unwrap();
     let result = suite.evaluate();
     assert!(
         result.is_err(),
@@ -86,7 +96,10 @@ fn eval_suite_passes_when_thresholds_file_is_empty() {
     let dir = make_fixture_dir();
     // Empty thresholds.toml is a valid TOML doc → all-None Thresholds → no gates.
     write_file(dir.path(), "thresholds.toml", "");
-    let suite = EvalSuite::from_dir(dir.path()).unwrap();
+    let suite = EvalSuite::from_dir_with_embedder(
+        dir.path(),
+        Box::new(BagOfWordsEmbedder::new()),
+    ).unwrap();
     let report = suite
         .evaluate()
         .expect("empty thresholds should not gate anything");

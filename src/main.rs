@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use clap::{Parser, Subcommand, ValueEnum};
 use semrouter::{
     config::RouterConfig,
-    embedding::{EmbeddingProvider, FastEmbedEmbedder, MockEmbedder},
+    embedding::{EmbeddingProvider, FastEmbedEmbedder},
     eval::{load_eval_cases, run_eval, EvalMetrics},
     experiment::ExperimentResult,
     SemanticRouter,
@@ -13,7 +13,6 @@ use semrouter::{
 
 #[derive(Debug, Clone, ValueEnum)]
 enum EmbedderType {
-    Mock,
     Fastembed,
 }
 
@@ -38,8 +37,8 @@ struct Cli {
     #[arg(long, default_value = "routes.jsonl")]
     routes: PathBuf,
 
-    /// Embedder backend: mock (keyword-based, no network) or fastembed (local ONNX)
-    #[arg(long, default_value = "mock", value_enum)]
+    /// Embedder backend: fastembed (local ONNX, default)
+    #[arg(long, default_value = "fastembed", value_enum)]
     embedder: EmbedderType,
 
     #[command(subcommand)]
@@ -83,7 +82,6 @@ enum Commands {
 
 fn build_embedder(embedder_type: &EmbedderType) -> Result<Box<dyn EmbeddingProvider>, String> {
     match embedder_type {
-        EmbedderType::Mock => Ok(Box::new(MockEmbedder::new())),
         EmbedderType::Fastembed => FastEmbedEmbedder::new()
             .map(|e| Box::new(e) as Box<dyn EmbeddingProvider>)
             .map_err(|e| format!("Failed to create fastembed embedder: {e}")),
@@ -92,7 +90,6 @@ fn build_embedder(embedder_type: &EmbedderType) -> Result<Box<dyn EmbeddingProvi
 
 fn embedder_label(t: &EmbedderType) -> &'static str {
     match t {
-        EmbedderType::Mock => "mock",
         EmbedderType::Fastembed => "fastembed",
     }
 }

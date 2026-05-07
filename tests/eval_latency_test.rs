@@ -1,5 +1,8 @@
+mod common;
+use common::test_embedder::BagOfWordsEmbedder;
+
 use semrouter::eval::{load_eval_cases, run_eval};
-use semrouter::{config::RouterConfig, embedding::MockEmbedder, SemanticRouter};
+use semrouter::{config::RouterConfig, SemanticRouter};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -9,11 +12,12 @@ fn write_temp(content: &str) -> NamedTempFile {
     f
 }
 
-// MockEmbedder carve-out: this test validates the structural wiring of the latency
-// pipeline (samples collected, ordering invariants, struct populated). Real fastembed
-// is reserved for the contract-test fixtures in tests/contract.rs, which assert real
-// latency floors. See CLAUDE.md "Testing principles" — using a real embedder here
-// would add a ~23MB model download to a fast machinery test for zero added signal.
+// BagOfWordsEmbedder carve-out: this test validates the structural wiring of the
+// latency pipeline (samples collected, ordering invariants, struct populated). Real
+// fastembed is reserved for the contract-test fixtures in tests/contract.rs, which
+// assert real latency floors. See CLAUDE.md "Testing principles" — using a real
+// embedder here would add a ~23MB model download to a fast machinery test for zero
+// added signal.
 #[test]
 fn run_eval_records_latency_metrics() {
     let routes = write_temp(concat!(
@@ -31,7 +35,7 @@ fn run_eval_records_latency_metrics() {
     config.router.minimum_score = 0.01;
     config.router.minimum_margin = 0.001;
     let router =
-        SemanticRouter::load(config, routes.path(), Box::new(MockEmbedder::new())).unwrap();
+        SemanticRouter::load(config, routes.path(), Box::new(BagOfWordsEmbedder::new())).unwrap();
 
     let metrics = run_eval(&router, &load_eval_cases(cases.path()).unwrap());
 
@@ -60,7 +64,7 @@ fn run_eval_with_no_cases_returns_zero_latency() {
     config.router.minimum_score = 0.01;
     config.router.minimum_margin = 0.001;
     let router =
-        SemanticRouter::load(config, routes.path(), Box::new(MockEmbedder::new())).unwrap();
+        SemanticRouter::load(config, routes.path(), Box::new(BagOfWordsEmbedder::new())).unwrap();
 
     let metrics = run_eval(&router, &[]);
 

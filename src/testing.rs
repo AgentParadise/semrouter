@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use crate::config::RouterConfig;
 #[cfg(feature = "fastembed")]
 use crate::embedding::FastEmbedEmbedder;
-use crate::embedding::{EmbeddingProvider, MockEmbedder};
+use crate::embedding::EmbeddingProvider;
 use crate::error::EvalSuiteError;
 use crate::eval::{load_eval_cases, run_eval, EvalMetrics};
 use crate::SemanticRouter;
@@ -79,11 +79,27 @@ impl std::fmt::Display for FailureReport {
 /// Reads `router.toml`, `routes.jsonl`, `eval.jsonl`, and optionally
 /// `thresholds.toml` from the given directory. Storage paths in `router.toml`
 /// are resolved relative to the fixture directory so the suite is self-contained.
-#[derive(Debug)]
 pub struct EvalSuite {
     dir: PathBuf,
     config: RouterConfig,
     thresholds: Thresholds,
+    /// Optional embedder injected by [`from_dir_with_embedder`](EvalSuite::from_dir_with_embedder).
+    /// When `Some`, bypasses `build_embedder_from_config`.
+    injected_embedder: Option<Box<dyn EmbeddingProvider>>,
+}
+
+impl std::fmt::Debug for EvalSuite {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EvalSuite")
+            .field("dir", &self.dir)
+            .field("config", &self.config)
+            .field("thresholds", &self.thresholds)
+            .field(
+                "injected_embedder",
+                &self.injected_embedder.as_ref().map(|_| "<embedder>"),
+            )
+            .finish()
+    }
 }
 
 impl EvalSuite {
@@ -107,7 +123,23 @@ impl EvalSuite {
             dir,
             config,
             thresholds,
+            injected_embedder: None,
         })
+    }
+
+    /// Like [`from_dir`](EvalSuite::from_dir), but uses the provided embedder
+    /// instead of constructing one from `router.toml`'s `embedding_model` field.
+    ///
+    /// Use this in tests that need a fast deterministic embedder without the
+    /// fastembed model download. The `embedding_model` value in `router.toml` is
+    /// ignored when an embedder is injected.
+    pub fn from_dir_with_embedder(
+        dir: impl AsRef<Path>,
+        embedder: Box<dyn EmbeddingProvider>,
+    ) -> Result<Self, EvalSuiteError> {
+        let mut suite = Self::from_dir(dir)?;
+        suite.injected_embedder = Some(embedder);
+        Ok(suite)
     }
 
     /// Run the eval and apply thresholds.
@@ -116,8 +148,12 @@ impl EvalSuite {
     /// violated. Consumes `self` — use [`assert_passes`](EvalSuite::assert_passes)
     /// for the common `#[test]` pattern.
     #[allow(clippy::result_large_err)] // FailureReport carries the full EvalReport by design
-    pub fn evaluate(self) -> Result<EvalReport, FailureReport> {
-        let report = self.run_inner();
+    pub fn evaluate(mut self) -> Result<EvalReport, FailureReport> {
+        let embedder = self
+            .injected_embedder
+            .take()
+            .unwrap_or_else(|| build_embedder_from_config(&self.config));
+        let report = self.run_inner_with_embedder(embedder);
         let failures = check_thresholds(&self.thresholds, &report);
         if failures.is_empty() {
             Ok(report)
@@ -134,9 +170,10 @@ impl EvalSuite {
         }
     }
 
-    // Panics are intentional here: `run_inner` is called from `evaluate` /
-    // `assert_passes`, both of which are designed to fail loudly inside `#[test]`.
-    fn run_inner(&self) -> EvalReport {
+    // Panics are intentional here: `run_inner_with_embedder` is called from
+    // `evaluate` / `assert_passes`, both of which are designed to fail loudly
+    // inside `#[test]`.
+    fn run_inner_with_embedder(&self, embedder: Box<dyn EmbeddingProvider>) -> EvalReport {
         use std::time::Instant;
 
         // Resolve storage paths relative to the fixture dir so the suite is
@@ -157,8 +194,6 @@ impl EvalSuite {
             .to_string_lossy()
             .into_owned();
 
-        let embedder = build_embedder_from_config(&self.config);
-
         let load_t0 = Instant::now();
         let router = SemanticRouter::load(patched, &routes_path, embedder)
             .unwrap_or_else(|e| panic!("EvalSuite: failed to load router: {e}"));
@@ -174,14 +209,12 @@ impl EvalSuite {
 
 /// Build an embedder from the `embedding_model` field in config.
 ///
-/// Supports `"mock"` and `"fastembed/..."`. Consumers needing a different
-/// backend implement the public [`EmbeddingProvider`] trait and use the
-/// lower-level [`SemanticRouter::load`] directly instead of [`EvalSuite::from_dir`].
+/// Only `"fastembed/..."` is accepted. Consumers needing a different backend
+/// implement the public [`EmbeddingProvider`] trait and pass it via
+/// [`EvalSuite::from_dir_with_embedder`] instead of relying on auto-construction.
 fn build_embedder_from_config(config: &RouterConfig) -> Box<dyn EmbeddingProvider> {
     let model = config.router.embedding_model.as_str();
-    if model == "mock" {
-        Box::new(MockEmbedder::new())
-    } else if model.starts_with("fastembed/") {
+    if model.starts_with("fastembed/") {
         #[cfg(feature = "fastembed")]
         {
             Box::new(
@@ -193,12 +226,14 @@ fn build_embedder_from_config(config: &RouterConfig) -> Box<dyn EmbeddingProvide
         {
             panic!(
                 "EvalSuite: embedding_model {model:?} requires the `fastembed` feature. \
-                 Enable it in your Cargo.toml or use a custom EmbeddingProvider."
-            );
+                 Enable it in your Cargo.toml or use EvalSuite::from_dir_with_embedder \
+                 to inject a custom EmbeddingProvider."
+            )
         }
     } else {
         panic!(
-            "EvalSuite: unsupported embedding_model {model:?}. Use \"mock\" or \"fastembed/...\"."
+            "EvalSuite: unsupported embedding_model {model:?}. \
+             Use \"fastembed/...\" or call EvalSuite::from_dir_with_embedder."
         )
     }
 }

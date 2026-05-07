@@ -1,5 +1,8 @@
+mod common;
+use common::test_embedder::BagOfWordsEmbedder;
+
 use semrouter::eval::{load_eval_cases, run_eval};
-use semrouter::{config::RouterConfig, embedding::MockEmbedder, SemanticRouter};
+use semrouter::{config::RouterConfig, SemanticRouter};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -17,7 +20,7 @@ fn make_router_with_thresholds(
     let mut config = RouterConfig::default_config();
     config.router.minimum_score = min_score;
     config.router.minimum_margin = min_margin;
-    SemanticRouter::load(config, routes_file, Box::new(MockEmbedder::new())).unwrap()
+    SemanticRouter::load(config, routes_file, Box::new(BagOfWordsEmbedder::new())).unwrap()
 }
 
 #[test]
