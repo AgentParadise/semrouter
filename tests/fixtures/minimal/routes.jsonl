@@ -1,0 +1,12 @@
+{"id":"min_001","route":"time","text":"what time is it","tags":["time"],"risk":"low"}
+{"id":"min_002","route":"time","text":"tell me the current time","tags":["time"],"risk":"low"}
+{"id":"min_003","route":"time","text":"do you have the time","tags":["time"],"risk":"low"}
+{"id":"min_004","route":"time","text":"what's the time right now","tags":["time"],"risk":"low"}
+{"id":"min_005","route":"weather","text":"what's the weather like","tags":["weather"],"risk":"low"}
+{"id":"min_006","route":"weather","text":"is it going to rain today","tags":["weather"],"risk":"low"}
+{"id":"min_007","route":"weather","text":"how hot is it outside","tags":["weather"],"risk":"low"}
+{"id":"min_008","route":"weather","text":"give me the forecast","tags":["weather"],"risk":"low"}
+{"id":"min_009","route":"music","text":"play some music","tags":["music"],"risk":"low"}
+{"id":"min_010","route":"music","text":"put on a song","tags":["music"],"risk":"low"}
+{"id":"min_011","route":"music","text":"start the playlist","tags":["music"],"risk":"low"}
+{"id":"min_012","route":"music","text":"play my favorite album","tags":["music"],"risk":"low"}

@@ -1,0 +1,6 @@
+{"text":"got the time","expected_route":"time"}
+{"text":"current time please","expected_route":"time"}
+{"text":"will it rain","expected_route":"weather"}
+{"text":"how warm is it","expected_route":"weather"}
+{"text":"play a track","expected_route":"music"}
+{"text":"put on some tunes","expected_route":"music"}

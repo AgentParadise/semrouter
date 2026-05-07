@@ -1,0 +1,19 @@
+[router]
+name = "private-jarvis-router"
+version = "0.1.0"
+embedding_model = "fastembed/AllMiniLML6V2"
+vector_dimension = 384
+similarity = "cosine"
+top_k = 3
+minimum_score = 0.22
+minimum_margin = 0.005
+fallback_route = "direct_llm"
+hard_negative_penalty = 0.1
+
+[storage]
+routes_file = "routes.jsonl"
+hard_negatives_file = "hard_negatives.jsonl"
+feedback_file = "feedback.jsonl"
+decision_log_file = "decisions.jsonl"
+index_dir = "index"
+

@@ -1,0 +1,12 @@
+# Floors calibrated against fastembed/AllMiniLML6V2 on 2026-05-06.
+# Observed: accuracy = 0.909, top-2 = 1.000, lowest per-route F1 = 0.667 (direct_llm), p95 = 2.757ms.
+# direct_llm F1 is 0.667 (recall=0.500) because 2/4 direct_llm cases fell below threshold rather
+# than misrouting — this is expected fallback-route behaviour. Precision is 1.000 for all routes.
+# Adjust as the corpus grows; never tighten faster than the eval set grows.
+# N=22 means one case flip = ~4.5% accuracy delta — margins reflect that sensitivity.
+
+min_accuracy = 0.85             # observed 0.909 minus ~0.06
+min_top2_accuracy = 0.95        # observed 1.000 minus 0.05
+min_per_route_f1 = 0.50         # lowest observed F1 is 0.667 (direct_llm fallback); floor set at 0.50
+max_p95_ms = 30.0               # observed 2.757ms × ~10 to absorb CI variance (model cold-start, CI CPU)
+max_load_ms = 15000.0

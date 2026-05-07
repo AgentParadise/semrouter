@@ -1,0 +1,22 @@
+{"text":"what time is it","expected_route":"time"}
+{"text":"got the time","expected_route":"time"}
+{"text":"do you know the time","expected_route":"time"}
+{"text":"what is the capital of France","expected_route":"direct_llm"}
+{"text":"explain how a black hole works","expected_route":"direct_llm"}
+{"text":"tell me a fun fact about octopuses","expected_route":"direct_llm"}
+{"text":"who painted the mona lisa","expected_route":"direct_llm"}
+{"text":"set a five minute timer","expected_route":"timer"}
+{"text":"set a timer for 10 minutes","expected_route":"timer"}
+{"text":"remind me in two hours","expected_route":"timer"}
+{"text":"wake me up at seven am","expected_route":"timer"}
+{"text":"is it going to rain","expected_route":"weather"}
+{"text":"how warm is it outside","expected_route":"weather"}
+{"text":"what's the forecast for tomorrow","expected_route":"weather"}
+{"text":"do I need a jacket","expected_route":"weather"}
+{"text":"turn off the kitchen lights","expected_route":"home_assistant"}
+{"text":"is the front door locked","expected_route":"home_assistant"}
+{"text":"set the thermostat to 70","expected_route":"home_assistant"}
+{"text":"dim the bedroom lights","expected_route":"home_assistant"}
+{"text":"stop","expected_route":"control"}
+{"text":"cancel that","expected_route":"control"}
+{"text":"never mind","expected_route":"control"}

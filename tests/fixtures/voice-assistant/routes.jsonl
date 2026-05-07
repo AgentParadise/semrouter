@@ -1,0 +1,35 @@
+{"id":"time_001","route":"time","text":"what time is it","tags":["time"],"risk":"low"}
+{"id":"time_002","route":"time","text":"what's the time","tags":["time"],"risk":"low"}
+{"id":"time_003","route":"time","text":"tell me the time","tags":["time"],"risk":"low"}
+{"id":"time_004","route":"time","text":"current time please","tags":["time"],"risk":"low"}
+{"id":"time_005","route":"time","text":"do you know what time it is","tags":["time"],"risk":"low"}
+{"id":"time_006","route":"time","text":"got the time","tags":["time"],"risk":"low"}
+{"id":"time_007","route":"time","text":"what is the current time","tags":["time"],"risk":"low"}
+{"id":"weather_001","route":"weather","text":"what's the weather like","tags":["weather"],"risk":"low"}
+{"id":"weather_002","route":"weather","text":"is it going to rain today","tags":["weather"],"risk":"low"}
+{"id":"weather_003","route":"weather","text":"how warm is it outside","tags":["weather"],"risk":"low"}
+{"id":"weather_004","route":"weather","text":"what's the temperature","tags":["weather"],"risk":"low"}
+{"id":"weather_005","route":"weather","text":"is it sunny out","tags":["weather"],"risk":"low"}
+{"id":"weather_006","route":"weather","text":"do I need an umbrella today","tags":["weather"],"risk":"low"}
+{"id":"timer_001","route":"timer","text":"set a five minute timer","tags":["timer"],"risk":"low"}
+{"id":"timer_002","route":"timer","text":"start a timer for ten minutes","tags":["timer"],"risk":"low"}
+{"id":"timer_003","route":"timer","text":"remind me in two hours","tags":["timer","reminder"],"risk":"low"}
+{"id":"timer_004","route":"timer","text":"set a timer for thirty seconds","tags":["timer"],"risk":"low"}
+{"id":"timer_005","route":"timer","text":"wake me up in twenty minutes","tags":["timer"],"risk":"low"}
+{"id":"ha_001","route":"home_assistant","text":"turn off the kitchen lights","tags":["ha","lights"],"risk":"medium","requires_confirmation":false}
+{"id":"ha_002","route":"home_assistant","text":"turn on the bedroom lamp","tags":["ha","lights"],"risk":"medium"}
+{"id":"ha_003","route":"home_assistant","text":"set the living room lights to fifty percent","tags":["ha","lights"],"risk":"medium"}
+{"id":"ha_004","route":"home_assistant","text":"lock the front door","tags":["ha","lock"],"risk":"medium"}
+{"id":"ha_005","route":"home_assistant","text":"set the thermostat to seventy two","tags":["ha","climate"],"risk":"medium"}
+{"id":"ha_006","route":"home_assistant","text":"is the garage door open","tags":["ha","query"],"risk":"low"}
+{"id":"control_001","route":"control","text":"stop","tags":["control"],"risk":"low"}
+{"id":"control_002","route":"control","text":"cancel","tags":["control"],"risk":"low"}
+{"id":"control_003","route":"control","text":"never mind","tags":["control"],"risk":"low"}
+{"id":"control_004","route":"control","text":"forget it","tags":["control"],"risk":"low"}
+{"id":"llm_001","route":"direct_llm","text":"what is the capital of France","tags":["knowledge"],"risk":"low"}
+{"id":"llm_002","route":"direct_llm","text":"who wrote hamlet","tags":["knowledge"],"risk":"low"}
+{"id":"llm_003","route":"direct_llm","text":"explain quantum entanglement","tags":["knowledge"],"risk":"low"}
+{"id":"llm_004","route":"direct_llm","text":"how does a transformer model work","tags":["knowledge"],"risk":"low"}
+{"id":"llm_005","route":"direct_llm","text":"give me a recipe for chocolate chip cookies","tags":["generative"],"risk":"low"}
+{"id":"llm_006","route":"direct_llm","text":"tell me a joke","tags":["generative"],"risk":"low"}
+{"id":"llm_007","route":"direct_llm","text":"summarize the plot of dune","tags":["knowledge"],"risk":"low"}

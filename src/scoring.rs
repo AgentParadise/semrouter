@@ -1,0 +1,136 @@
+use crate::embedding::cosine_similarity;
+use crate::route::{EmbeddedExample, EmbeddedHardNegative};
+use std::collections::HashMap;
+
+/// Minimum cosine similarity to a hard negative before the penalty fires.
+/// Below this threshold the input is not considered a genuine confusion.
+const HN_SIMILARITY_THRESHOLD: f32 = 0.40;
+
+#[derive(Debug, Clone)]
+pub struct ScoredCandidate {
+    pub route: String,
+    pub score: f32,
+    pub matched_example_ids: Vec<String>,
+}
+
+/// Score all routes by averaging the top-k similarities per route.
+/// If hard_negatives are provided, applies a proportional penalty when
+/// the input is similar to a hard negative for a given route.
+pub fn score_routes(
+    input_embedding: &[f32],
+    examples: &[EmbeddedExample],
+    top_k: usize,
+    hard_negatives: &[EmbeddedHardNegative],
+    penalty: f32,
+) -> Vec<ScoredCandidate> {
+    // Group similarity scores by route
+    let mut route_scores: HashMap<String, Vec<(f32, String)>> = HashMap::new();
+
+    for ex in examples {
+        let sim = cosine_similarity(input_embedding, &ex.embedding);
+        route_scores
+            .entry(ex.example.route.clone())
+            .or_default()
+            .push((sim, ex.example.id.clone()));
+    }
+
+    // For each route, take top-k and average, then apply hard negative penalty
+    let mut candidates: Vec<ScoredCandidate> = route_scores
+        .into_iter()
+        .map(|(route, mut scores)| {
+            scores.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+            let k = scores.len().min(top_k);
+            let top = &scores[..k];
+            let avg_score = top.iter().map(|(s, _)| s).sum::<f32>() / k as f32;
+            let matched_ids = top.iter().map(|(_, id)| id.clone()).collect();
+
+            // Threshold penalty: apply full penalty only when input is clearly similar to a hard
+            // negative (similarity > threshold). Proportional scaling caused collateral damage to
+            // genuine queries that share surface vocabulary with the hard negatives.
+            let applied_penalty = if !hard_negatives.is_empty() {
+                let max_hn_sim = hard_negatives
+                    .iter()
+                    .filter(|hn| hn.hn.route == route)
+                    .map(|hn| cosine_similarity(input_embedding, &hn.embedding))
+                    .fold(0.0f32, f32::max);
+                if max_hn_sim > HN_SIMILARITY_THRESHOLD {
+                    penalty
+                } else {
+                    0.0
+                }
+            } else {
+                0.0
+            };
+
+            ScoredCandidate {
+                route,
+                score: (avg_score - applied_penalty).max(0.0),
+                matched_example_ids: matched_ids,
+            }
+        })
+        .collect();
+
+    candidates.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+    candidates
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::embedding::{EmbeddingProvider, MockEmbedder};
+    use crate::route::{EmbeddedExample, RiskLevel, RouteExample};
+
+    fn make_example(id: &str, route: &str, text: &str) -> EmbeddedExample {
+        let e = MockEmbedder::new();
+        let embedding = e.embed(text).unwrap();
+        EmbeddedExample {
+            example: RouteExample {
+                id: id.to_string(),
+                route: route.to_string(),
+                text: text.to_string(),
+                tags: vec![],
+                risk: RiskLevel::Low,
+            },
+            embedding,
+        }
+    }
+
+    #[test]
+    fn coding_input_scores_higher_for_coding_route() {
+        let examples = vec![
+            make_example("e1", "coding", "Help me debug this Python error"),
+            make_example("e2", "coding", "Fix this Rust compile error"),
+            make_example("e3", "coding", "Write a unit test for this function"),
+            make_example(
+                "e4",
+                "second_brain_capture",
+                "Save this idea to my knowledge base",
+            ),
+            make_example(
+                "e5",
+                "second_brain_capture",
+                "Store this thought in my brain",
+            ),
+            make_example(
+                "e6",
+                "second_brain_capture",
+                "Capture this insight in my notes",
+            ),
+        ];
+
+        let embedder = MockEmbedder::new();
+        let input = embedder.embed("debug this code error in python").unwrap();
+        let candidates = score_routes(&input, &examples, 3, &[], 0.0);
+
+        assert!(!candidates.is_empty());
+        assert_eq!(
+            candidates[0].route,
+            "coding",
+            "Expected coding to win, got: {:?}",
+            candidates
+                .iter()
+                .map(|c| (&c.route, c.score))
+                .collect::<Vec<_>>()
+        );
+    }
+}

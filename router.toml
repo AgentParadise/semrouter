@@ -1,0 +1,20 @@
+[router]
+name = "semrouter"
+version = "0.1.0"
+embedding_model = "fastembed/AllMiniLML6V2"
+vector_dimension = 384
+similarity = "cosine"
+top_k = 3
+# AllMiniLML6V2 (fastembed) top scores: 0.24-0.62. Use 0.22/0.03 for this model.
+# Mock embedder scores 0.3-0.6; use 0.25/0.04 with --embedder mock.
+minimum_score = 0.22
+minimum_margin = 0.005
+fallback_route = "needs_review"
+hard_negative_penalty = 0.1
+
+[storage]
+routes_file = "routes.jsonl"
+hard_negatives_file = "hard_negatives.jsonl"
+feedback_file = "feedback.jsonl"
+decision_log_file = "decisions.jsonl"
+index_dir = "index"

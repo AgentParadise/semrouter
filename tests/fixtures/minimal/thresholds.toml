@@ -1,0 +1,8 @@
+# Floors below which the corpus is considered regressed.
+# Calibrated against fastembed/AllMiniLML6V2 on 2026-05-06.
+# Observed: accuracy = 1.00, top2_accuracy = 1.00, all per-route F1 = 1.000, p95 = 1.287ms.
+min_accuracy = 0.83
+min_top2_accuracy = 0.83
+min_per_route_f1 = 0.5
+max_p95_ms = 50.0
+max_load_ms = 15000.0

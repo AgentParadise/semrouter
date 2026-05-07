@@ -1,0 +1,8 @@
+target/
+decisions.jsonl
+feedback.raw.jsonl
+index/embeddings.f32
+index/centroids.f32
+.vscode/
+.fastembed_cache/
+.claude/
