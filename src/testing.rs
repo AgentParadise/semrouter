@@ -171,9 +171,9 @@ impl EvalSuite {
 
 /// Build an embedder from the `embedding_model` field in config.
 ///
-/// Only `"mock"` and `"fastembed/..."` are supported. `HttpEmbedder` is
-/// intentionally excluded — consumers who use HTTP embedders should
-/// integration-test their service end-to-end rather than via EvalSuite.
+/// Supports `"mock"` and `"fastembed/..."`. Consumers needing a different
+/// backend implement the public [`EmbeddingProvider`] trait and use the
+/// lower-level [`SemanticRouter::load`] directly instead of [`EvalSuite::from_dir`].
 fn build_embedder_from_config(config: &RouterConfig) -> Box<dyn EmbeddingProvider> {
     let model = config.router.embedding_model.as_str();
     if model == "mock" {

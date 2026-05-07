@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use clap::{Parser, Subcommand, ValueEnum};
 use semrouter::{
     config::RouterConfig,
-    embedding::{EmbeddingProvider, FastEmbedEmbedder, HttpEmbedder, MockEmbedder},
+    embedding::{EmbeddingProvider, FastEmbedEmbedder, MockEmbedder},
     eval::{load_eval_cases, run_eval, EvalMetrics},
     experiment::ExperimentResult,
     SemanticRouter,
@@ -12,7 +12,6 @@ use semrouter::{
 #[derive(Debug, Clone, ValueEnum)]
 enum EmbedderType {
     Mock,
-    Http,
     Fastembed,
 }
 
@@ -37,7 +36,7 @@ struct Cli {
     #[arg(long, default_value = "routes.jsonl")]
     routes: PathBuf,
 
-    /// Embedder backend: mock (keyword-based, no network) or http (OpenAI-compatible API)
+    /// Embedder backend: mock (keyword-based, no network) or fastembed (local ONNX)
     #[arg(long, default_value = "mock", value_enum)]
     embedder: EmbedderType,
 
@@ -80,49 +79,18 @@ enum Commands {
     },
 }
 
-fn build_embedder(
-    embedder_type: &EmbedderType,
-    config: &RouterConfig,
-) -> Result<Box<dyn EmbeddingProvider>, String> {
+fn build_embedder(embedder_type: &EmbedderType) -> Result<Box<dyn EmbeddingProvider>, String> {
     match embedder_type {
         EmbedderType::Mock => Ok(Box::new(MockEmbedder::new())),
         EmbedderType::Fastembed => FastEmbedEmbedder::new()
             .map(|e| Box::new(e) as Box<dyn EmbeddingProvider>)
             .map_err(|e| format!("Failed to create fastembed embedder: {e}")),
-        EmbedderType::Http => {
-            let endpoint = config
-                .embedding
-                .endpoint
-                .clone()
-                .or_else(|| {
-                    std::env::var("OPENAI_BASE_URL")
-                        .ok()
-                        .map(|base| format!("{}/v1/embeddings", base.trim_end_matches('/')))
-                })
-                .ok_or_else(|| {
-                    "No embedding endpoint configured.\n  \
-                     Set [embedding] endpoint in router.toml  OR  \
-                     export OPENAI_BASE_URL=https://api.openai.com"
-                        .to_string()
-                })?;
-
-            let model = config
-                .embedding
-                .model
-                .clone()
-                .unwrap_or_else(|| "text-embedding-3-small".to_string());
-
-            HttpEmbedder::new(endpoint, model)
-                .map(|e| Box::new(e) as Box<dyn EmbeddingProvider>)
-                .map_err(|e| format!("Failed to create HTTP embedder: {e}"))
-        }
     }
 }
 
 fn embedder_label(t: &EmbedderType) -> &'static str {
     match t {
         EmbedderType::Mock => "mock",
-        EmbedderType::Http => "http",
         EmbedderType::Fastembed => "fastembed",
     }
 }
@@ -148,7 +116,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    let embedder = match build_embedder(&cli.embedder, &config) {
+    let embedder = match build_embedder(&cli.embedder) {
         Ok(e) => e,
         Err(msg) => {
             eprintln!("Embedder error: {msg}");

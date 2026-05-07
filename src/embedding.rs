@@ -1,5 +1,4 @@
 use crate::error::RouterError;
-use serde::{Deserialize, Serialize};
 
 // ── FastEmbedEmbedder ─────────────────────────────────────────────────────────
 
@@ -37,101 +36,11 @@ impl EmbeddingProvider for FastEmbedEmbedder {
     }
 }
 
-// ── HttpEmbedder ─────────────────────────────────────────────────────────────
-
-#[derive(Debug, Clone)]
-pub struct HttpEmbedder {
-    pub endpoint: String,
-    pub model: String,
-    pub client: reqwest::Client,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct EmbeddingRequest {
-    model: String,
-    input: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct EmbeddingResponse {
-    data: Vec<EmbeddingData>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct EmbeddingData {
-    object: String,
-    embedding: Vec<f32>,
-    index: usize,
-}
-
-impl HttpEmbedder {
-    pub fn new(endpoint: String, model: String) -> Result<Self, RouterError> {
-        Ok(Self {
-            endpoint,
-            model,
-            client: reqwest::Client::new(),
-        })
-    }
-
-    pub async fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError> {
-        let request = EmbeddingRequest {
-            model: self.model.clone(),
-            input: text.to_string(),
-        };
-
-        let response = self
-            .client
-            .post(&self.endpoint)
-            .json(&request)
-            .send()
-            .await
-            .map_err(|e| RouterError::Embedding(format!("HTTP request failed: {e}")))?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "unknown error".to_string());
-            return Err(RouterError::Embedding(format!(
-                "HTTP {status} from embedding service: {body}"
-            )));
-        }
-
-        let resp: EmbeddingResponse = response
-            .json()
-            .await
-            .map_err(|e| RouterError::Embedding(format!("JSON parse failed: {e}")))?;
-
-        resp.data
-            .into_iter()
-            .next()
-            .map(|d| d.embedding)
-            .ok_or_else(|| RouterError::Embedding("Empty embedding response".to_string()))
-    }
-
-    pub fn dimension(&self) -> usize {
-        1536
-    }
-}
-
 // ── EmbeddingProvider trait ───────────────────────────────────────────────────
 
 pub trait EmbeddingProvider {
     fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError>;
     fn dimension(&self) -> usize;
-}
-
-impl EmbeddingProvider for HttpEmbedder {
-    fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError> {
-        tokio::runtime::Runtime::new()
-            .unwrap()
-            .block_on(HttpEmbedder::embed(self, text))
-    }
-
-    fn dimension(&self) -> usize {
-        HttpEmbedder::dimension(self)
-    }
 }
 
 // ── MockEmbedder ──────────────────────────────────────────────────────────────
