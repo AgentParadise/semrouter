@@ -1,0 +1,12 @@
+# CI/CD workflows — arbitrary code execution risk; require maintainer review on changes.
+.github/                     @NeuralEmpowerment
+
+# Dependency manifests — supply chain risk; reviewed changes only.
+Cargo.toml                   @NeuralEmpowerment
+Cargo.lock                   @NeuralEmpowerment
+
+# Security policy
+SECURITY.md                  @NeuralEmpowerment
+
+# License — IP / legal sensitivity
+LICENSE                      @NeuralEmpowerment
