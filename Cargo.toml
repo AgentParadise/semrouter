@@ -1,13 +1,31 @@
 [package]
 name = "semrouter"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-description = "Semantic vector router for agent/model/workflow dispatch"
+authors = ["AgentParadise <***REDACTED***>"]
+description = "File-based semantic vector router for agent/model/workflow dispatch. Zero default deps."
 license = "MIT"
 repository = "https://github.com/AgentParadise/semrouter"
+homepage = "https://github.com/AgentParadise/semrouter"
+documentation = "https://docs.rs/semrouter"
 readme = "README.md"
-categories = ["text-processing"]
+categories = ["text-processing", "algorithms"]
 keywords = ["semantic", "router", "embeddings", "fastembed", "routing"]
+exclude = [
+    ".github/",
+    ".vscode/",
+    ".claude/",
+    ".fastembed_cache/",
+    "experiments/",
+    "pocs/",
+    "docs/",
+    "target/",
+    "Cargo.lock",
+    "*.jsonl",
+    "router.toml",
+    "tests/fixtures/voice-assistant/",
+    "tests/fixtures/minimal/",
+]
 
 [[bin]]
 name = "semrouter"
@@ -30,3 +48,7 @@ cli = ["dep:clap"]
 
 [dev-dependencies]
 tempfile = "3"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
