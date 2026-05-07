@@ -6,9 +6,9 @@
 
 Pre-v0.1.1, semrouter shipped three embedder backends:
 
-1. `MockEmbedder` — 64-dim keyword-bag, deterministic, zero deps. For testing.
-2. `FastEmbedEmbedder` — local ONNX MiniLM via the `fastembed` crate. The recommended production embedder.
-3. `HttpEmbedder` — OpenAI-compatible `/v1/embeddings` HTTP client built on `reqwest` + `tokio`.
+1. `MockEmbedder`: 64-dim keyword-bag, deterministic, zero deps. For testing.
+2. `FastEmbedEmbedder`: local ONNX MiniLM via the `fastembed` crate. The recommended production embedder.
+3. `HttpEmbedder`: OpenAI-compatible `/v1/embeddings` HTTP client built on `reqwest` + `tokio`.
 
 The HTTP embedder pulled in ~85 transitive crates (the entire async stack) for what is, in its core form, a 30-line HTTP request. Worse, it shipped a half-baked implementation: no connection pooling, no retry/backoff, no rate limiting, no observability hooks. Real HTTP-embedding consumers replace that on day one with their own implementation tuned for their service.
 
@@ -19,7 +19,7 @@ The HTTP embedder pulled in ~85 transitive crates (the entire async stack) for w
 - `MockEmbedder` (always available)
 - `FastEmbedEmbedder` (behind `fastembed` feature, default-on)
 
-For any other backend — HTTP API, custom local model, candle-based embedder, GPU-accelerated ort directly — consumers implement the public `EmbeddingProvider` trait:
+For any other backend (HTTP API, custom local model, candle-based embedder, GPU-accelerated ort directly) consumers implement the public `EmbeddingProvider` trait:
 
 ```rust
 pub trait EmbeddingProvider: Send + Sync {
@@ -54,7 +54,7 @@ The full README has this example.
 
 - semrouter's default dep tree drops by ~85 crates (no `reqwest`, no `tokio`).
 - Consumers pick their own HTTP client (`ureq` for ~5 deps; `reqwest` for full bells and whistles; `hyper` for fanatics; `tokio` if they're already async).
-- Consumers control retry, backoff, batching, observability — all the details that vary per service.
+- Consumers control retry, backoff, batching, observability: all the details that vary per service.
 - The `EmbeddingProvider` trait is sync, which keeps the library sync. Async creep is contained.
 
 ### Negative
@@ -69,5 +69,5 @@ The full README has this example.
 ## References
 
 - CHANGELOG.md v0.1.1 (HttpEmbedder removal)
-- `src/embedding.rs` — `EmbeddingProvider` trait definition
+- `src/embedding.rs`: `EmbeddingProvider` trait definition
 - README.md "Bring your own embedder" section

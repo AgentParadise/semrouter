@@ -21,7 +21,7 @@ cargo test --test integration           # one integration file
 cargo test --test routing_test
 cargo test <name>                       # filter by test name
 
-# Run the CLI (mock embedder by default — no network/model download)
+# Run the CLI (mock embedder by default: no network/model download)
 cargo run -- route "Help me debug this Python error"
 cargo run -- routes
 cargo run -- info
@@ -43,14 +43,14 @@ Single binary + library crate. `src/lib.rs` exposes `SemanticRouter`; `src/main.
 1. `storage::load_examples` reads `routes.jsonl`; `embed_examples` produces `EmbeddedExample`s. Same for `hard_negatives.jsonl` → `EmbeddedHardNegative`.
 2. `embedding::EmbeddingProvider` (trait) embeds the input; `normalize` makes cosine = dot product.
 3. `scoring::score_routes` groups example similarities by route, averages the top-K, then subtracts a penalty for nearby hard negatives (`hard_negative_penalty` × max sim to any hard-negative).
-4. `decision::make_decision` applies `minimum_score` and `minimum_margin` from config and emits a `RouteDecision` with status (`accepted` / `ambiguous` / `below_threshold` / `needs_review`) and candidate scores. semrouter is a pure classifier — risk assessment and confirmation gating belong in the consumer's plugin layer, not here.
+4. `decision::make_decision` applies `minimum_score` and `minimum_margin` from config and emits a `RouteDecision` with status (`accepted` / `ambiguous` / `below_threshold` / `needs_review`) and candidate scores. semrouter is a pure classifier: risk assessment and confirmation gating belong in the consumer's plugin layer, not here.
 
 **Embedders** (`src/embedding.rs`):
-- `MockEmbedder` — 64-dim keyword-bag, deterministic, no network. Used by tests and as CLI default. Score range ~0.25–0.60.
-- `FastEmbedEmbedder` — local ONNX `AllMiniLML6V2` via `fastembed` crate, 384-dim. Caches model under `.fastembed_cache/`. Score range ~0.22–0.62.
-- `HttpEmbedder` — OpenAI-compatible `/v1/embeddings`. Endpoint from `[embedding].endpoint` in `router.toml` or `OPENAI_BASE_URL` env var.
+- `MockEmbedder`: 64-dim keyword-bag, deterministic, no network. Used by tests and as CLI default. Score range ~0.25–0.60.
+- `FastEmbedEmbedder`: local ONNX `AllMiniLML6V2` via `fastembed` crate, 384-dim. Caches model under `.fastembed_cache/`. Score range ~0.22–0.62.
+- `HttpEmbedder`: OpenAI-compatible `/v1/embeddings`. Endpoint from `[embedding].endpoint` in `router.toml` or `OPENAI_BASE_URL` env var.
 
-Thresholds in `router.toml` are tuned **per embedder**. The committed values target `fastembed` (`minimum_score = 0.22`, `minimum_margin = 0.005`); for `mock` use ~0.25 / 0.04. Changing embedder usually means re-tuning thresholds and re-running `eval`.
+Thresholds in `router.toml` are tuned **per embedder**. The committed values target `fastembed` (`minimum_score = 0.22`, `minimum_margin = 0.005`). For `mock`, use ~0.25 / 0.04. Changing embedder usually means re-tuning thresholds and re-running `eval`.
 
 **Eval / experiments** (`src/eval.rs`, `src/experiment.rs`): `eval` command computes accuracy, top-2 accuracy, per-route precision/recall/F1, and confusion pairs against `eval.jsonl`. `--save-experiment` writes a timestamped JSON snapshot (config + metrics + embedder label) into `experiments/` for cross-run comparison.
 
@@ -60,12 +60,12 @@ Thresholds in `router.toml` are tuned **per embedder**. The committed values tar
 |---|---|
 | `router.toml` | Thresholds, embedder config, storage paths |
 | `routes.jsonl` | Labeled examples (source of truth for routing) |
-| `hard_negatives.jsonl` | Counter-examples — penalize routes that match these |
+| `hard_negatives.jsonl` | Counter-examples that penalize routes which match them |
 | `eval.jsonl` | Held-out `{text, expected_route}` pairs for `cargo run -- eval` |
 | `experiments/` | Saved eval runs (gitted) |
 | `pocs/POC-NNN/` | Phase-by-phase proof-of-concept writeups |
 
-There is no `feedback.jsonl` / `decisions.jsonl` / `index/` yet — those are reserved for later phases (see README "Implementation Phases").
+There is no `feedback.jsonl` / `decisions.jsonl` / `index/` yet; those are reserved for later phases (see README "Implementation Phases").
 
 ## Testing principles
 
@@ -76,4 +76,8 @@ There is no `feedback.jsonl` / `decisions.jsonl` / `index/` yet — those are re
 
 - Errors flow through `RouterError` (`src/error.rs`); `main.rs` prints and `exit(1)`s on each command boundary.
 - All vectors are unit-normalized before scoring. If you add a new embedder, normalize in the provider or rely on the `normalize()` call in `SemanticRouter::route`.
-- `storage::load_examples` skips blank lines and surfaces parse errors with line numbers — keep that behavior when extending JSONL formats.
+- `storage::load_examples` skips blank lines and surfaces parse errors with line numbers; keep that behavior when extending JSONL formats.
+
+## Writing style
+
+**No em dashes (—) anywhere in source, docs, or commit messages.** Restructure the sentence instead: use a colon for an explanation, a comma for a brief aside, parentheses for a parenthetical, or split into two sentences. This applies to all Markdown, Rust doc comments, code comments, README, CHANGELOG, ADRs, and PR descriptions. En dashes (–) in numeric ranges like `0.25–0.60` are fine.

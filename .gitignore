@@ -19,3 +19,4 @@ experiments/
 /eval.jsonl
 /hard_negatives.jsonl
 /router.toml
+markdown-explorer/

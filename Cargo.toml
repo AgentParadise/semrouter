@@ -2,7 +2,7 @@
 name = "semrouter"
 version = "0.1.1"
 edition = "2021"
-authors = ["AgentParadise <***REDACTED***>"]
+authors = ["AgentParadise"]
 description = "File-based semantic vector router for agent/model/workflow dispatch. Zero default deps."
 license = "MIT"
 repository = "https://github.com/AgentParadise/semrouter"

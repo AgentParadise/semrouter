@@ -4,7 +4,7 @@
 
 ## Context
 
-Earlier semrouter prototypes tracked a "risk policy" — the router would emit a `policy` block on `RouteDecision` indicating whether a route required user confirmation, was high-risk, etc. The classification was driven by hardcoded substring matching against route names (`"execute_shell_command"` → high-risk, `"send_email"` → requires_confirmation, etc.).
+Earlier semrouter prototypes tracked a "risk policy": the router would emit a `policy` block on `RouteDecision` indicating whether a route required user confirmation, was high-risk, etc. The classification was driven by hardcoded substring matching against route names (`"execute_shell_command"` → high-risk, `"send_email"` → requires_confirmation, etc.).
 
 Two problems with this:
 
@@ -38,9 +38,9 @@ The risk logic sits **next to the dangerous code**, where the author cannot forg
 
 ### What semrouter still tracks
 
-- Score thresholds (`minimum_score`, `minimum_margin` from `router.toml`) — these are about **classification confidence**, not policy.
-- Hard negatives (counter-examples that penalize specific routes for specific inputs) — also classification, not policy.
-- Latency metrics — observability of the classifier itself.
+- Score thresholds (`minimum_score`, `minimum_margin` from `router.toml`): these are about **classification confidence**, not policy.
+- Hard negatives (counter-examples that penalize specific routes for specific inputs): also classification, not policy.
+- Latency metrics: observability of the classifier itself.
 
 These all sit on the classification side of the line.
 
@@ -64,5 +64,5 @@ These all sit on the classification side of the line.
 ## References
 
 - CHANGELOG.md v0.1.0 (the risk-policy removal, before public release)
-- `src/decision.rs` — the `DecisionStatus` enum and `RouteDecision` struct (no `policy` field)
-- `docs/integration-example.md` — the Plugin / Dispatcher pattern for consumers
+- `src/decision.rs`: the `DecisionStatus` enum and `RouteDecision` struct (no `policy` field)
+- `docs/integration-example.md`: the Plugin / Dispatcher pattern for consumers

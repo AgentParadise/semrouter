@@ -55,10 +55,8 @@ fn make_fixture_dir() -> TempDir {
 #[test]
 fn eval_suite_passes_when_thresholds_met() {
     let dir = make_fixture_dir();
-    let suite = EvalSuite::from_dir_with_embedder(
-        dir.path(),
-        Box::new(BagOfWordsEmbedder::new()),
-    ).unwrap();
+    let suite =
+        EvalSuite::from_dir_with_embedder(dir.path(), Box::new(BagOfWordsEmbedder::new())).unwrap();
     let report = suite.evaluate().unwrap();
     assert!(report.metrics.accuracy >= 0.5);
     assert!(report.metrics.latency.p95_ms < 1000.0);
@@ -70,10 +68,8 @@ fn eval_suite_fails_when_accuracy_below_floor() {
     // 1.01 is impossible to reach (accuracy is capped at 1.0), so this threshold
     // always fires regardless of how well BagOfWordsEmbedder routes.
     write_file(dir.path(), "thresholds.toml", "min_accuracy = 1.01\n");
-    let suite = EvalSuite::from_dir_with_embedder(
-        dir.path(),
-        Box::new(BagOfWordsEmbedder::new()),
-    ).unwrap();
+    let suite =
+        EvalSuite::from_dir_with_embedder(dir.path(), Box::new(BagOfWordsEmbedder::new())).unwrap();
     let result = suite.evaluate();
     assert!(
         result.is_err(),
@@ -96,10 +92,8 @@ fn eval_suite_passes_when_thresholds_file_is_empty() {
     let dir = make_fixture_dir();
     // Empty thresholds.toml is a valid TOML doc → all-None Thresholds → no gates.
     write_file(dir.path(), "thresholds.toml", "");
-    let suite = EvalSuite::from_dir_with_embedder(
-        dir.path(),
-        Box::new(BagOfWordsEmbedder::new()),
-    ).unwrap();
+    let suite =
+        EvalSuite::from_dir_with_embedder(dir.path(), Box::new(BagOfWordsEmbedder::new())).unwrap();
     let report = suite
         .evaluate()
         .expect("empty thresholds should not gate anything");

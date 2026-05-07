@@ -10,10 +10,7 @@
 //! Requires the `fastembed` feature (default-on).
 
 use semrouter::{
-    config::RouterConfig,
-    decision::RouteDecision,
-    embedding::FastEmbedEmbedder,
-    SemanticRouter,
+    config::RouterConfig, decision::RouteDecision, embedding::FastEmbedEmbedder, SemanticRouter,
 };
 use std::io::Write;
 use std::path::Path;
@@ -66,7 +63,11 @@ fn semrouter_compatible_iso8601() -> String {
     let mi = (secs_of_day % 3600) / 60;
     let s = secs_of_day % 60;
     let z = days + 719_468;
-    let era = if z >= 0 { z / 146_097 } else { (z - 146_096) / 146_097 };
+    let era = if z >= 0 {
+        z / 146_097
+    } else {
+        (z - 146_096) / 146_097
+    };
     let doe = (z - era * 146_097) as u64;
     let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
     let y = yoe as i64 + era * 400;
@@ -86,12 +87,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let routes = dir.join("routes.jsonl");
     {
         let mut f = std::fs::File::create(&routes)?;
-        writeln!(f, r#"{{"id":"r1","route":"time","text":"what time is it","tags":[],"risk":"low"}}"#)?;
-        writeln!(f, r#"{{"id":"r2","route":"time","text":"tell me the current time","tags":[],"risk":"low"}}"#)?;
-        writeln!(f, r#"{{"id":"r3","route":"weather","text":"is it going to rain","tags":[],"risk":"low"}}"#)?;
-        writeln!(f, r#"{{"id":"r4","route":"weather","text":"give me the forecast","tags":[],"risk":"low"}}"#)?;
-        writeln!(f, r#"{{"id":"r5","route":"music","text":"play some music","tags":[],"risk":"low"}}"#)?;
-        writeln!(f, r#"{{"id":"r6","route":"music","text":"start the playlist","tags":[],"risk":"low"}}"#)?;
+        writeln!(
+            f,
+            r#"{{"id":"r1","route":"time","text":"what time is it","tags":[],"risk":"low"}}"#
+        )?;
+        writeln!(
+            f,
+            r#"{{"id":"r2","route":"time","text":"tell me the current time","tags":[],"risk":"low"}}"#
+        )?;
+        writeln!(
+            f,
+            r#"{{"id":"r3","route":"weather","text":"is it going to rain","tags":[],"risk":"low"}}"#
+        )?;
+        writeln!(
+            f,
+            r#"{{"id":"r4","route":"weather","text":"give me the forecast","tags":[],"risk":"low"}}"#
+        )?;
+        writeln!(
+            f,
+            r#"{{"id":"r5","route":"music","text":"play some music","tags":[],"risk":"low"}}"#
+        )?;
+        writeln!(
+            f,
+            r#"{{"id":"r6","route":"music","text":"start the playlist","tags":[],"risk":"low"}}"#
+        )?;
     }
     std::fs::File::create(dir.join("hard_negatives.jsonl"))?;
 
@@ -115,10 +134,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = std::fs::remove_file(&log_path);
 
     let inputs = [
-        "got the time",         // → time
-        "will it rain today",   // → weather
-        "play that song",       // → music
-        "what's 42 squared",    // → below_threshold (no example matches)
+        "got the time",       // → time
+        "will it rain today", // → weather
+        "play that song",     // → music
+        "what's 42 squared",  // → below_threshold (no example matches)
     ];
 
     for input in &inputs {
@@ -127,10 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Print to stdout for visibility.
         println!(
             "input:    {:?}\nrouted:   {:?}\nstatus:   {}\ntop:      {:.3}\n",
-            decision.input,
-            decision.selected_route,
-            decision.status,
-            decision.confidence.top_score
+            decision.input, decision.selected_route, decision.status, decision.confidence.top_score
         );
 
         // Log to disk for later review/tagging.

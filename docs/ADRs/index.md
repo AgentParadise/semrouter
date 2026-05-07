@@ -2,7 +2,7 @@
 
 This directory holds non-obvious design decisions that future maintainers (and current readers) should understand.
 
-Format: [Michael Nygard's ADR template](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Each ADR is short — Status, Context, Decision, Consequences — and dated.
+Format: [Michael Nygard's ADR template](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions). Each ADR is short (Status, Context, Decision, Consequences) and dated.
 
 | # | Title | Status |
 |---|---|---|
@@ -15,7 +15,7 @@ Format: [Michael Nygard's ADR template](https://cognitect.com/blog/2011/11/15/do
 - Adding or removing a default dependency (always)
 - Architectural changes that span multiple modules (probably)
 - Public API decisions that constrain future evolution (probably)
-- Style or formatting preferences (no — those go in `CONTRIBUTING.md`)
+- Style or formatting preferences (no, those go in `CONTRIBUTING.md`)
 
 ## How to write one
 

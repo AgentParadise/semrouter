@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/banner-v1.png" alt="semrouter — Semantic Routing Engine" />
+  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/banner-v1.png" alt="semrouter: Semantic Routing Engine" />
 </p>
 
 # semrouter
@@ -8,7 +8,7 @@
 [![crates.io](https://img.shields.io/crates/v/semrouter.svg)](https://crates.io/crates/semrouter)
 [![docs.rs](https://docs.rs/semrouter/badge.svg)](https://docs.rs/semrouter)
 
-A lightweight, file-based semantic router for agent / model / workflow dispatch. Routes input text to a labeled route by comparing embeddings against a curated set of examples. **Zero default dependencies beyond `serde`, `serde_json`, `toml`, and `thiserror`** — bundle a local embedder via the `fastembed` feature, or bring your own. No LLM in the hot path. Sub-millisecond routing.
+A lightweight, file-based semantic router for agent / model / workflow dispatch. Routes input text to a labeled route by comparing embeddings against a curated set of examples. **Zero default dependencies beyond `serde`, `serde_json`, `toml`, and `thiserror`.** Bundle a local embedder via the `fastembed` feature, or bring your own. No LLM in the hot path. Sub-millisecond routing.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/flow-diagram.svg" alt="semrouter routing pipeline: input text → embed → cosine vs. examples → top-K per route → threshold + margin → decision" />
@@ -16,20 +16,20 @@ A lightweight, file-based semantic router for agent / model / workflow dispatch.
 
 ## Why
 
-If you're building an AI agent, voice assistant, or workflow system, you need to dispatch user input to one of N specialized handlers. The naive options — keyword matching (brittle), LLM classifier (slow, expensive, cloud round-trip) — both have real costs. semrouter splits the difference: a tiny local embedding model gives you semantic understanding, and a flat file of labeled examples gives you a router you can edit and version-control.
+If you're building an AI agent, voice assistant, or workflow system, you need to dispatch user input to one of N specialized handlers. The naive options, keyword matching (brittle) and LLM classifier (slow, expensive, cloud round-trip), both have real costs. semrouter splits the difference: a tiny local embedding model gives you semantic understanding, and a flat file of labeled examples gives you a router you can edit and version-control.
 
-semrouter is a **pure classifier**. Risk classification, confirmation prompts, and dispatch live in your application — they don't belong in the router. This separation keeps risk policies next to the code that actually runs the dangerous thing.
+semrouter is a **pure classifier**. Risk classification, confirmation prompts, and dispatch live in your application; they don't belong in the router. This separation keeps risk policies next to the code that actually runs the dangerous thing.
 
 ## Install
 
-**Batteries-included (default — bundles fastembed local embedder):**
+**Batteries-included (default, bundles fastembed local embedder):**
 
 ```toml
 [dependencies]
 semrouter = "0.1"
 ```
 
-**Lean (lib only — bring your own `EmbeddingProvider`):**
+**Lean (lib only, bring your own `EmbeddingProvider`):**
 
 ```toml
 [dependencies]
@@ -125,7 +125,7 @@ impl EmbeddingProvider for OpenAIEmbedder {
 }
 ```
 
-That's the full HTTP-embedder surface. semrouter doesn't ship one because every consumer wants different things from their HTTP client (retry, batching, observability) — pick yours.
+That's the full HTTP-embedder surface. semrouter doesn't ship one because every consumer wants different things from their HTTP client (retry, batching, observability); pick yours.
 
 ## Decision shape
 
@@ -200,16 +200,16 @@ The 9.1% "incorrect" cases are correctly routed to the `direct_llm` fallback int
 
 ## Status
 
-semrouter is **pre-1.0**. The public API surface is unstable — minor version bumps may include breaking changes. Pin to a specific version (`semrouter = "=0.1.1"`) for exact reproducibility.
+semrouter is **pre-1.0**. The public API surface is unstable; minor version bumps may include breaking changes. Pin to a specific version (`semrouter = "=0.1.1"`) for exact reproducibility.
 
 `v1.0.0` will freeze the API.
 
 ## Roadmap
 
-- **v0.2.0** — Configurable embedder. Pick any fastembed-supported model from `router.toml` (`fastembed/AllMiniLML6V2`, `fastembed/BGESmallENV15`, `fastembed/MiniLML12V2`, etc.) with a tradeoff guide in docs.
-- **v0.3.0** — Closed-loop learning. `semrouter tag` (interactive CLI to mark recent decisions correct/wrong) + `semrouter promote` (ingest tagged feedback as new routing examples + run `EvalSuite` to gate regression). The router gets better the more you use it.
-- **v1.0.0** — API freeze + crates.io 1.0.
+- **v0.2.0**: Configurable embedder. Pick any fastembed-supported model from `router.toml` (`fastembed/AllMiniLML6V2`, `fastembed/BGESmallENV15`, `fastembed/MiniLML12V2`, etc.) with a tradeoff guide in docs.
+- **v0.3.0**: Closed-loop learning. `semrouter tag` (interactive CLI to mark recent decisions correct/wrong) + `semrouter promote` (ingest tagged feedback as new routing examples + run `EvalSuite` to gate regression). The router gets better the more you use it.
+- **v1.0.0**: API freeze + crates.io 1.0.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

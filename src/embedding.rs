@@ -68,4 +68,3 @@ pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     debug_assert_eq!(a.len(), b.len(), "Embedding dimension mismatch");
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
 }
-
