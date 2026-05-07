@@ -6,3 +6,7 @@ index/centroids.f32
 .vscode/
 .fastembed_cache/
 .claude/
+
+# Internal-only planning artifacts (kept local, not committed)
+docs/superpowers/
+pocs/
