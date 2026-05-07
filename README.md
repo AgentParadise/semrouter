@@ -1,231 +1,211 @@
 # semrouter
 
-A lightweight, file-based semantic router for agent/model/workflow dispatch, written in Rust.
+[![CI](https://github.com/AgentParadise/semrouter/actions/workflows/ci.yml/badge.svg)](https://github.com/AgentParadise/semrouter/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/semrouter.svg)](https://crates.io/crates/semrouter)
+[![docs.rs](https://docs.rs/semrouter/badge.svg)](https://docs.rs/semrouter)
 
-Routes user requests to categories, agents, or models by comparing their embeddings to a curated set of labeled examples — no LLM call required in the hot path.
-
-## Concept
+A lightweight, file-based semantic router for agent / model / workflow dispatch. Routes input text to a labeled route by comparing embeddings against a curated set of examples. **Zero default dependencies beyond `serde`, `serde_json`, `toml`, and `thiserror`** — bundle a local embedder via the `fastembed` feature, or bring your own. No LLM in the hot path. Sub-millisecond routing.
 
 ```
-input text → embed → compare to examples → score routes → apply thresholds → decision
+input text  →  embed  →  cosine vs. examples  →  top-K per route  →  threshold + margin  →  decision
 ```
 
-Routing behavior improves over time by adding reviewed examples and rebuilding the index. No neural retraining required.
+## Why
 
-## Quick Start
+If you're building an AI agent, voice assistant, or workflow system, you need to dispatch user input to one of N specialized handlers. The naive options — keyword matching (brittle), LLM classifier (slow, expensive, cloud round-trip) — both have real costs. semrouter splits the difference: a tiny local embedding model gives you semantic understanding, and a flat file of labeled examples gives you a router you can edit and version-control.
 
-```bash
-# Route a request
-semrouter route "Help me debug this Python error"
+semrouter is a **pure classifier**. Risk classification, confirmation prompts, and dispatch live in your application — they don't belong in the router. This separation keeps risk policies next to the code that actually runs the dangerous thing.
 
-# List loaded routes
-semrouter routes
+## Install
 
-# Show config and stats
-semrouter info
+**Batteries-included (default — bundles fastembed local embedder):**
+
+```toml
+[dependencies]
+semrouter = "0.1"
 ```
 
-## Output Format
+**Lean (lib only — bring your own `EmbeddingProvider`):**
+
+```toml
+[dependencies]
+semrouter = { version = "0.1", default-features = false }
+```
+
+The lean profile compiles against ~21 transitive crates. The default profile pulls in `fastembed` for batteries-included local embeddings (~210 crates, dominated by the ONNX runtime).
+
+## 30-second example
+
+`routes.jsonl`:
+
+```jsonl
+{"id":"r1","route":"time","text":"what time is it","tags":["time"],"risk":"low"}
+{"id":"r2","route":"time","text":"tell me the current time","tags":["time"],"risk":"low"}
+{"id":"r3","route":"weather","text":"is it going to rain","tags":["weather"],"risk":"low"}
+{"id":"r4","route":"weather","text":"give me the forecast","tags":["weather"],"risk":"low"}
+```
+
+`router.toml`:
+
+```toml
+[router]
+name = "demo"
+version = "0.1.0"
+embedding_model = "fastembed/AllMiniLML6V2"
+vector_dimension = 384
+top_k = 3
+minimum_score = 0.22
+minimum_margin = 0.005
+fallback_route = "needs_review"
+
+[storage]
+routes_file = "routes.jsonl"
+hard_negatives_file = "hard_negatives.jsonl"
+feedback_file = "feedback.jsonl"
+decision_log_file = "decisions.jsonl"
+index_dir = "index"
+```
+
+```rust
+use semrouter::{SemanticRouter, config::RouterConfig, embedding::FastEmbedEmbedder};
+use std::path::Path;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = RouterConfig::load(Path::new("router.toml"))?;
+    let embedder = Box::new(FastEmbedEmbedder::new()?);
+    let router = SemanticRouter::load(config, Path::new("routes.jsonl"), embedder)?;
+
+    let decision = router.route("got the time")?;
+    println!("{:#?}", decision.selected_route);
+    // → Some("time")
+    Ok(())
+}
+```
+
+See [`examples/quickstart.rs`](examples/quickstart.rs) for a runnable version.
+
+## Bring your own embedder
+
+The `EmbeddingProvider` trait is one method:
+
+```rust
+pub trait EmbeddingProvider: Send + Sync {
+    fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError>;
+}
+```
+
+A custom HTTP-backed provider with `ureq` (~5 transitive crates):
+
+```rust
+use semrouter::embedding::EmbeddingProvider;
+use semrouter::error::RouterError;
+
+struct OpenAIEmbedder { api_key: String }
+
+impl EmbeddingProvider for OpenAIEmbedder {
+    fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError> {
+        let resp: serde_json::Value = ureq::post("https://api.openai.com/v1/embeddings")
+            .set("Authorization", &format!("Bearer {}", self.api_key))
+            .send_json(serde_json::json!({
+                "input": text,
+                "model": "text-embedding-3-small"
+            }))
+            .map_err(|e| RouterError::Embedding(e.to_string()))?
+            .into_json()
+            .map_err(|e| RouterError::Embedding(e.to_string()))?;
+
+        Ok(resp["data"][0]["embedding"]
+            .as_array().unwrap()
+            .iter().map(|v| v.as_f64().unwrap() as f32).collect())
+    }
+}
+```
+
+That's the full HTTP-embedder surface. semrouter doesn't ship one because every consumer wants different things from their HTTP client (retry, batching, observability) — pick yours.
+
+## Decision shape
 
 ```json
 {
-  "input": "Help me debug this Python error",
-  "selected_route": "coding",
+  "input": "got the time",
+  "selected_route": "time",
   "status": "accepted",
-  "confidence": {
-    "top_score": 0.542,
-    "second_score": 0.18,
-    "margin": 0.362
-  },
+  "confidence": { "top_score": 0.591, "second_score": 0.241, "margin": 0.350 },
   "candidates": [
-    {
-      "route": "coding",
-      "score": 0.542,
-      "matched_examples": ["ex_001", "ex_005", "ex_006"]
-    }
+    { "route": "time", "score": 0.591, "matched_examples": ["r1", "r2"] },
+    { "route": "weather", "score": 0.241, "matched_examples": ["r3"] }
   ]
 }
 ```
 
-## Decision Statuses
+Status is one of: `accepted`, `ambiguous`, `below_threshold`, `needs_review`.
 
-| Status | Meaning |
-|---|---|
-| `accepted` | Route selected with sufficient confidence |
-| `ambiguous` | Top route score is above threshold but margin is too small |
-| `below_threshold` | Top score is below minimum |
-| `needs_review` | No examples loaded or unknown state |
+## Contract testing your route corpus
 
-## File Layout
-
-```
-semrouter/
-  router.toml          # Config: thresholds, embedder, storage paths
-  routes.jsonl         # Route examples (source of truth)
-  hard_negatives.jsonl # Counter-examples to sharpen routing
-  eval.jsonl           # Held-out evaluation pairs
-```
-
-## router.toml
-
-```toml
-[router]
-name = "semrouter"
-embedding_model = "fastembed"  # or "mock" for testing, "http" for OpenAI-compatible
-top_k = 3                      # Average top-N similarities per route
-minimum_score = 0.22           # Tuned for fastembed (all-MiniLM-L6-v2)
-minimum_margin = 0.005         # Min gap between top and second route score
-fallback_route = "needs_review"
-```
-
-## routes.jsonl Format
-
-Each line is one labeled example:
-
-```jsonl
-{"id":"ex_001","route":"coding","text":"Help me debug this Python error","tags":["debugging","python"]}
-{"id":"ex_002","route":"second_brain_capture","text":"Save this idea to my knowledge base","tags":["knowledge"]}
-```
-
-## Scoring
-
-**Top-K per route**: For each candidate route, find the top-K examples by cosine similarity, then average their scores. This is more robust than nearest-neighbor alone.
-
-**Margin check**: If the gap between the first and second route score is below `minimum_margin`, the decision is `ambiguous` even if the top score passes `minimum_score`.
-
-**Hard negatives**: Counter-examples in `hard_negatives.jsonl` apply a penalty to routes whose examples are too similar to things they should NOT match.
-
-## Embedding Notes
-
-- **Mock embedder** (`--embedder mock`): 64-dim keyword-bag vectors. Deterministic, fast, no download. Good for testing routing logic. Score range ~0.25–0.60. Thresholds: `minimum_score = 0.25`, `minimum_margin = 0.04`.
-- **FastEmbed** (`--embedder fastembed`): Local ONNX `all-MiniLM-L6-v2` via `fastembed` crate, 384-dim. Downloads ~23MB model to `.fastembed_cache/` on first use. Score range ~0.22–0.62. Thresholds: `minimum_score = 0.22`, `minimum_margin = 0.005`.
-- **HTTP** (`--embedder http`): OpenAI-compatible `/v1/embeddings`. Endpoint from `[embedding].endpoint` in `router.toml` or `OPENAI_BASE_URL` env var.
-
-Thresholds are tuned per embedder. Changing the embedder usually requires re-tuning `minimum_score` / `minimum_margin` and re-running `eval`.
-
-## Using as a Library
-
-`semrouter` is published as a Rust crate. From a Gitea-hosted consumer, pin by tag:
-
-```toml
-[dependencies]
-semrouter = { git = "https://github.com/AgentParadise/semrouter", tag = "v0.1.0" }
-```
-
-Or, if you've vendored the crate as a git submodule:
-
-```toml
-[dependencies]
-semrouter = { path = "../vendor/semrouter" }
-```
-
-### Routing
+Each consumer keeps its own corpus + threshold floors and asserts quality in `cargo test`:
 
 ```rust
-use semrouter::{SemanticRouter, config::RouterConfig, embedding::FastEmbedEmbedder};
-
-let config = RouterConfig::load("router.toml".as_ref())?;
-let embedder = Box::new(FastEmbedEmbedder::new()?);
-let router = SemanticRouter::load(config, "routes.jsonl".as_ref(), embedder)?;
-let decision = router.route("what time is it")?;
-
-if let Some(route) = decision.selected_route {
-    // dispatch the route — semrouter is a pure classifier; risk gating
-    // and confirmation prompts live in your application layer.
-}
-```
-
-semrouter returns the route + scores + confidence. Risk classification and confirmation gating are intentionally NOT semrouter's concern — they belong in the consumer's plugin / capability layer where they can actually act on the dispatch.
-
-## Contract Testing
-
-Each consumer keeps its own route corpus + thresholds and asserts quality in its own test suite:
-
-```
-my-service/
-  tests/
-    semrouter_corpus/
-      routes.jsonl
-      eval.jsonl
-      router.toml
-      thresholds.toml
-    semrouter_corpus.rs
-```
-
-```rust
-// my-service/tests/semrouter_corpus.rs
 use semrouter::testing::EvalSuite;
 
 #[test]
-fn route_corpus_meets_quality_bar() {
-    EvalSuite::from_dir("tests/semrouter_corpus")
+fn my_corpus_meets_quality_bar() {
+    EvalSuite::from_dir("tests/fixtures/voice-assistant")
         .unwrap()
         .assert_passes();
 }
 ```
 
-`thresholds.toml` keys (all optional — only set keys are enforced):
+`tests/fixtures/voice-assistant/thresholds.toml`:
 
 ```toml
 min_accuracy        = 0.85
 min_top2_accuracy   = 0.90
 min_per_route_f1    = 0.50
-max_p50_ms          = 10.0
 max_p95_ms          = 25.0
-max_p99_ms          = 50.0
 max_load_ms         = 15000.0
 ```
 
-semrouter itself ships two reference fixtures under `tests/fixtures/` that exercise this same machinery — see `tests/contract.rs`.
+If your corpus regresses (accuracy drops, latency spikes), CI fails. See [`docs/integration-example.md`](docs/integration-example.md) for the full integration story.
 
-### CI Gating Without Rust
+## CLI
 
-If your CI doesn't run Rust tests (Python service, shell scripts, etc.), use the CLI:
-
-```bash
-semrouter --config router.toml --routes routes.jsonl --embedder fastembed \
-    eval --eval-file eval.jsonl --thresholds thresholds.toml
-# exit 0 = passed, 1 = threshold breached, 2 = config error
-```
-
-## Common Workflows (justfile)
+The `cli` feature (default-on) provides the `semrouter` binary:
 
 ```bash
-just              # list all recipes
-just build        # cargo build --release
-just test         # cargo test (unit + integration; no fastembed download)
-just contract     # cargo test --test contract --release (real fastembed)
-just eval voice-assistant      # eval against a fixture
-just eval-gated voice-assistant # eval + apply thresholds
-just route "what time is it"   # one-off route lookup
-just ci           # fmt + clippy + test + contract (pre-commit gate)
+semrouter --config router.toml --routes routes.jsonl --embedder fastembed route "what time is it"
+semrouter --config router.toml --routes routes.jsonl --embedder fastembed eval --eval-file eval.jsonl
+semrouter --config router.toml --routes routes.jsonl --embedder fastembed eval \
+    --eval-file eval.jsonl --thresholds thresholds.toml
+# → exit 0 = passed, exit 1 = threshold breached, exit 2 = config/parse error
 ```
 
-## Versioning
+## Performance
 
-semrouter follows semver with a 0.x convention:
+Real numbers from the bundled `voice-assistant` fixture (6 routes, 35 examples, 22 eval cases) using `fastembed/AllMiniLML6V2` on a M-series Mac:
 
-- **0.x.y** (current): pre-1.0; breaking changes can land on minor bumps. The public API surface (`SemanticRouter`, `RouteDecision`, `semrouter::testing::*`) is unstable until 1.0.0.
-- **1.0.0** (future): public API frozen. Breaking changes only on major bumps.
+| Metric | Value |
+|---|---|
+| Accuracy | 90.9% |
+| Top-2 accuracy | 100.0% |
+| p50 latency | 1.24 ms |
+| p95 latency | 2.82 ms |
+| p99 latency | 3.74 ms |
+| Cold-start (model load) | ~50-70 ms |
 
-Consumers should pin by tag (`tag = "v0.1.0"`), not by branch. Pinning by SHA is also fine for internal use.
+The 9.1% "incorrect" cases are correctly routed to the `direct_llm` fallback intent (where they belong). For the 5 first-class intents, F1 is **1.000 across the board**.
 
-Each release tag's commit message includes a `BREAKING CHANGES:` block when applicable. Check `git log v0.X.Y..v0.Y.Z` for migration notes.
+## Status
 
-## POC Progress
+semrouter is **pre-1.0**. The public API surface is unstable — minor version bumps may include breaking changes. Pin to a specific version (`semrouter = "=0.1.1"`) for exact reproducibility.
 
-| POC | Phase | Status |
-|---|---|---|
-| [POC-001](pocs/POC-001/POC-001.md) | Minimal brute-force router | Done |
-| [POC-002](pocs/POC-002/) | HTTP embedder, eval framework, experiment runner | Done |
-| [POC-003](pocs/POC-003/) | Local ONNX embeddings (fastembed all-MiniLM-L6-v2) | Done |
-| [POC-004](pocs/POC-004/) | Expanded examples + hard negatives | Done |
+`v1.0.0` will freeze the API.
 
-## Implementation Phases
+## Roadmap
 
-- **Phase 1** (POC-001): Brute-force routing, mock embedder, CLI ✅
-- **Phase 2** (POC-002): `eval` command, experiment runner, HTTP embedder ✅
-- **Phase 3**: Decision logging, feedback command, promote-feedback
-- **Phase 4** (POC-003/004): Local embedder (fastembed-rs / ONNX), hard negatives ✅
-- **Phase 5**: Axum HTTP service (not in scope for v0.1.0)
-- **Phase 6**: Eval dashboard
+- **v0.2.0** — Configurable embedder. Pick any fastembed-supported model from `router.toml` (`fastembed/AllMiniLML6V2`, `fastembed/BGESmallENV15`, `fastembed/MiniLML12V2`, etc.) with a tradeoff guide in docs.
+- **v0.3.0** — Closed-loop learning. `semrouter tag` (interactive CLI to mark recent decisions correct/wrong) + `semrouter promote` (ingest tagged feedback as new routing examples + run `EvalSuite` to gate regression). The router gets better the more you use it.
+- **v1.0.0** — API freeze + crates.io 1.0.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
