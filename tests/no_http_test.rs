@@ -7,7 +7,14 @@
 
 #[test]
 fn no_reqwest_in_cargo_toml() {
-    let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml")).unwrap();
-    assert!(!manifest.contains("reqwest"), "reqwest should not be a dependency");
-    assert!(!manifest.contains("tokio"), "tokio should not be a dependency (only reqwest needed it)");
+    let manifest =
+        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml")).unwrap();
+    assert!(
+        !manifest.contains("reqwest"),
+        "reqwest should not be a dependency"
+    );
+    assert!(
+        !manifest.contains("tokio"),
+        "tokio should not be a dependency (only reqwest needed it)"
+    );
 }

@@ -19,10 +19,10 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 use crate::config::RouterConfig;
-use crate::error::EvalSuiteError;
-use crate::embedding::{EmbeddingProvider, MockEmbedder};
 #[cfg(feature = "fastembed")]
 use crate::embedding::FastEmbedEmbedder;
+use crate::embedding::{EmbeddingProvider, MockEmbedder};
+use crate::error::EvalSuiteError;
 use crate::eval::{load_eval_cases, run_eval, EvalMetrics};
 use crate::SemanticRouter;
 

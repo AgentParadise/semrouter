@@ -28,5 +28,8 @@ fn from_dir_returns_typed_error_when_thresholds_malformed() {
     std::fs::write(dir.path().join("thresholds.toml"), "this = is = bad").unwrap();
 
     let result = EvalSuite::from_dir(dir.path());
-    assert!(matches!(result.unwrap_err(), EvalSuiteError::ThresholdsParse(_)));
+    assert!(matches!(
+        result.unwrap_err(),
+        EvalSuiteError::ThresholdsParse(_)
+    ));
 }

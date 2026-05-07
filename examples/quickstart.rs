@@ -3,11 +3,7 @@
 //! Run with: `cargo run --example quickstart --release`
 //! Requires the `fastembed` feature (default-on).
 
-use semrouter::{
-    config::RouterConfig,
-    embedding::FastEmbedEmbedder,
-    SemanticRouter,
-};
+use semrouter::{config::RouterConfig, embedding::FastEmbedEmbedder, SemanticRouter};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -15,10 +11,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::create_dir_all(&dir)?;
     let routes = dir.join("routes.jsonl");
     let mut f = std::fs::File::create(&routes)?;
-    writeln!(f, r#"{{"id":"r1","route":"time","text":"what time is it","tags":[],"risk":"low"}}"#)?;
-    writeln!(f, r#"{{"id":"r2","route":"time","text":"tell me the current time","tags":[],"risk":"low"}}"#)?;
-    writeln!(f, r#"{{"id":"r3","route":"weather","text":"is it going to rain","tags":[],"risk":"low"}}"#)?;
-    writeln!(f, r#"{{"id":"r4","route":"weather","text":"give me the forecast","tags":[],"risk":"low"}}"#)?;
+    writeln!(
+        f,
+        r#"{{"id":"r1","route":"time","text":"what time is it","tags":[],"risk":"low"}}"#
+    )?;
+    writeln!(
+        f,
+        r#"{{"id":"r2","route":"time","text":"tell me the current time","tags":[],"risk":"low"}}"#
+    )?;
+    writeln!(
+        f,
+        r#"{{"id":"r3","route":"weather","text":"is it going to rain","tags":[],"risk":"low"}}"#
+    )?;
+    writeln!(
+        f,
+        r#"{{"id":"r4","route":"weather","text":"give me the forecast","tags":[],"risk":"low"}}"#
+    )?;
 
     let hn_path = dir.join("hard_negatives.jsonl");
     std::fs::File::create(&hn_path)?;
