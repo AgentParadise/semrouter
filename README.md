@@ -10,9 +10,9 @@
 
 A lightweight, file-based semantic router for agent / model / workflow dispatch. Routes input text to a labeled route by comparing embeddings against a curated set of examples. **Zero default dependencies beyond `serde`, `serde_json`, `toml`, and `thiserror`** — bundle a local embedder via the `fastembed` feature, or bring your own. No LLM in the hot path. Sub-millisecond routing.
 
-```
-input text  →  embed  →  cosine vs. examples  →  top-K per route  →  threshold + margin  →  decision
-```
+<p align="center">
+  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/flow-diagram.svg" alt="semrouter routing pipeline: input text → embed → cosine vs. examples → top-K per route → threshold + margin → decision" />
+</p>
 
 ## Why
 

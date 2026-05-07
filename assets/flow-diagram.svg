@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 160" width="980" height="160" role="img" aria-labelledby="flowTitle flowDesc">
+  <title id="flowTitle">semrouter routing pipeline</title>
+  <desc id="flowDesc">Horizontal flow: input text → embed → cosine vs examples → top-K per route → threshold + margin → decision.</desc>
+
+  <defs>
+    <!-- arrow head -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0891B2"/>
+    </marker>
+
+    <!-- subtle drop shadow -->
+    <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
+      <feOffset dx="0" dy="1" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <style>
+      .step-rect {
+        fill: rgba(8, 145, 178, 0.08);
+        stroke: #0891B2;
+        stroke-width: 1.6;
+      }
+      .step-rect-accent {
+        fill: rgba(168, 85, 247, 0.10);
+        stroke: #A855F7;
+      }
+      .step-label {
+        fill: #0E7490;
+        font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        text-anchor: middle;
+      }
+      .step-label-accent {
+        fill: #7E22CE;
+      }
+      .step-sublabel {
+        fill: #475569;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 10px;
+        text-anchor: middle;
+      }
+      .arrow-line {
+        stroke: #0891B2;
+        stroke-width: 1.8;
+        fill: none;
+      }
+      .caption {
+        fill: #64748B;
+        font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 11px;
+        font-style: italic;
+        text-anchor: middle;
+      }
+      @media (prefers-color-scheme: dark) {
+        .step-rect { fill: rgba(46, 231, 234, 0.10); stroke: #2EE7EA; }
+        .step-rect-accent { fill: rgba(168, 85, 247, 0.18); stroke: #C084FC; }
+        .step-label { fill: #67E8F9; }
+        .step-label-accent { fill: #E9D5FF; }
+        .step-sublabel { fill: #94A3B8; }
+        .arrow-line { stroke: #2EE7EA; }
+        .caption { fill: #94A3B8; }
+      }
+    </style>
+  </defs>
+
+  <!-- 6 boxes evenly spaced -->
+
+  <!-- Box 1: input text -->
+  <g filter="url(#ds)">
+    <rect class="step-rect" x="10" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label" x="75" y="64">input</text>
+  <text class="step-label" x="75" y="80">text</text>
+
+  <!-- Arrow 1 -->
+  <line class="arrow-line" x1="143" y1="68" x2="172" y2="68" marker-end="url(#arrow)"/>
+
+  <!-- Box 2: embed -->
+  <g filter="url(#ds)">
+    <rect class="step-rect" x="175" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label" x="240" y="72">embed</text>
+  <text class="step-sublabel" x="240" y="89">fastembed · 384d</text>
+
+  <!-- Arrow 2 -->
+  <line class="arrow-line" x1="308" y1="68" x2="337" y2="68" marker-end="url(#arrow)"/>
+
+  <!-- Box 3: cosine vs examples -->
+  <g filter="url(#ds)">
+    <rect class="step-rect" x="340" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label" x="405" y="64">cosine vs.</text>
+  <text class="step-label" x="405" y="80">examples</text>
+
+  <!-- Arrow 3 -->
+  <line class="arrow-line" x1="473" y1="68" x2="502" y2="68" marker-end="url(#arrow)"/>
+
+  <!-- Box 4: top-K per route -->
+  <g filter="url(#ds)">
+    <rect class="step-rect" x="505" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label" x="570" y="64">top-K per</text>
+  <text class="step-label" x="570" y="80">route</text>
+
+  <!-- Arrow 4 -->
+  <line class="arrow-line" x1="638" y1="68" x2="667" y2="68" marker-end="url(#arrow)"/>
+
+  <!-- Box 5: threshold + margin -->
+  <g filter="url(#ds)">
+    <rect class="step-rect" x="670" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label" x="735" y="64">threshold</text>
+  <text class="step-label" x="735" y="80">+ margin</text>
+
+  <!-- Arrow 5 -->
+  <line class="arrow-line" x1="803" y1="68" x2="832" y2="68" marker-end="url(#arrow)"/>
+
+  <!-- Box 6: decision (accent purple) -->
+  <g filter="url(#ds)">
+    <rect class="step-rect step-rect-accent" x="835" y="40" width="130" height="56" rx="8" ry="8"/>
+  </g>
+  <text class="step-label step-label-accent" x="900" y="64">decision</text>
+  <text class="step-sublabel" x="900" y="82">accepted · ambiguous</text>
+  <text class="step-sublabel" x="900" y="93">below_threshold</text>
+
+  <!-- Caption under the flow -->
+  <text class="caption" x="490" y="135">no LLM in the hot path · sub-millisecond routing · zero default deps beyond serde + toml + thiserror</text>
+</svg>
