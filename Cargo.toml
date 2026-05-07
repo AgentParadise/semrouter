@@ -36,7 +36,7 @@ required-features = ["cli", "fastembed"]
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-thiserror = "1"
+thiserror = "2"
 toml = "0.8"
 
 # Optional — opt in via features. Lean default keeps the dep tree small for
