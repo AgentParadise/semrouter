@@ -20,3 +20,8 @@ experiments/
 /hard_negatives.jsonl
 /router.toml
 markdown-explorer/
+
+# Long-form internal docs (kept local, not committed)
+docs/integration-example.md
+docs/workflow.md
+docs/research-reinforcement-feedback-loop.md

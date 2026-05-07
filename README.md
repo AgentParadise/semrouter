@@ -169,7 +169,7 @@ max_p95_ms          = 25.0
 max_load_ms         = 15000.0
 ```
 
-If your corpus regresses (accuracy drops, latency spikes), CI fails. See [`docs/integration-example.md`](docs/integration-example.md) for the full integration story.
+If your corpus regresses (accuracy drops, latency spikes), CI fails.
 
 ## CLI
 
