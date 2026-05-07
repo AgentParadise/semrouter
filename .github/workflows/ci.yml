@@ -12,7 +12,7 @@ env:
 
 jobs:
   test:
-    name: Test (default features)
+    name: Test (all features)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,36 +26,36 @@ jobs:
           path: .fastembed_cache
           key: fastembed-AllMiniLML6V2-v1
       - run: cargo fmt --all -- --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test --release
-      - run: cargo test --test contract --release -- --nocapture
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --release --all-features
+      - run: cargo test --test contract --release --all-features -- --nocapture
       - name: cargo doc
-        run: cargo doc --no-deps
+        run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: "-D warnings"
-      - run: cargo build --examples --release
+      - run: cargo build --examples --release --all-features
       - run: cargo publish --dry-run
 
   lean-build:
-    name: Lean (no default features)
+    name: Lean (default — no features)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --no-default-features
-      - run: cargo test --no-default-features --lib
+      - run: cargo build
+      - run: cargo test --lib
       - name: Verify dep count
         run: |
-          count=$(cargo tree --no-default-features --edges normal | grep -oE "[a-z0-9_-]+ v[0-9]" | sort -u | wc -l)
-          echo "Lean dep count: $count"
+          count=$(cargo tree --edges normal | grep -oE "[a-z0-9_-]+ v[0-9]" | sort -u | wc -l)
+          echo "Lean dep count (default features): $count"
           if [ "$count" -gt 25 ]; then
-            echo "::error::Lean profile dep count grew above 25; investigate."
+            echo "::error::Default profile dep count grew above 25 — a new default dep slipped in. Investigate."
             exit 1
           fi
 
   fastembed-only:
-    name: Fastembed-only (no CLI)
+    name: Fastembed feature (no CLI)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,8 +66,8 @@ jobs:
         with:
           path: .fastembed_cache
           key: fastembed-AllMiniLML6V2-v1
-      - run: cargo build --no-default-features --features fastembed
-      - run: cargo test --no-default-features --features fastembed --release
+      - run: cargo build --features fastembed
+      - run: cargo test --features fastembed --release
 
   coverage:
     name: Coverage

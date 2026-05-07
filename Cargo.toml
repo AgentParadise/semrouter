@@ -39,12 +39,17 @@ serde_json = "1"
 thiserror = "1"
 toml = "0.8"
 
-# Optional — enabled by default. Disable with default-features = false.
+# Optional — opt in via features. Lean default keeps the dep tree small for
+# library consumers who bring their own EmbeddingProvider.
 fastembed = { version = "4", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries"], optional = true }
 clap = { version = "4", features = ["derive"], optional = true }
 
 [features]
-default = ["fastembed", "cli"]
+# No defaults: `cargo add semrouter` produces a lean lib (~12 crates).
+# Add features explicitly:
+#   semrouter = { version = "0.1", features = ["fastembed"] }       # bundle local embedder
+#   cargo install semrouter --features cli,fastembed                 # install the CLI
+default = []
 fastembed = ["dep:fastembed"]
 cli = ["dep:clap"]
 

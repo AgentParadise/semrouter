@@ -22,21 +22,31 @@ semrouter is a **pure classifier**. Risk classification, confirmation prompts, a
 
 ## Install
 
-**Batteries-included (default, bundles fastembed local embedder):**
+**Default — lean library (bring your own `EmbeddingProvider`):**
 
 ```toml
 [dependencies]
 semrouter = "0.1"
 ```
 
-**Lean (lib only, bring your own `EmbeddingProvider`):**
+Compiles against ~12 transitive crates (`serde`, `serde_json`, `toml`, `thiserror` and their support deps). No embedder, no async runtime, no HTTP client. You implement [`EmbeddingProvider`](#bring-your-own-embedder) with whatever backend fits.
+
+**Opt-in — bundled fastembed local embedder:**
 
 ```toml
 [dependencies]
-semrouter = { version = "0.1", default-features = false }
+semrouter = { version = "0.1", features = ["fastembed"] }
 ```
 
-The lean profile compiles against ~21 transitive crates. The default profile pulls in `fastembed` for batteries-included local embeddings (~210 crates, dominated by the ONNX runtime).
+Adds the `FastEmbedEmbedder` type backed by [`fastembed`](https://crates.io/crates/fastembed) (local ONNX MiniLM, ~210 transitive crates dominated by the ONNX runtime). Pick this when you want batteries included.
+
+**CLI install:**
+
+```bash
+cargo install semrouter --features cli,fastembed
+```
+
+The binary requires both features — `cli` for the clap-derived argument parser and `fastembed` because the binary needs a usable embedder out of the box.
 
 ## 30-second example
 

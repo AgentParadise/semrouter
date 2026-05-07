@@ -8,6 +8,15 @@ with a 0.x convention: breaking changes can land on minor bumps until 1.0.0.
 
 ## [Unreleased]
 
+### Changed (BREAKING: pre-publication)
+- **Default features flipped to `[]`** (was `["fastembed", "cli"]`).
+  `cargo add semrouter` now produces a lean library (~23 transitive crates) with
+  no embedder bundled. Consumers explicitly opt into `fastembed` or implement
+  their own `EmbeddingProvider`. CLI install requires `--features cli,fastembed`.
+- This makes "use semrouter without fastembed and avoid its transitive deps"
+  the default path of least resistance, matching the project's zero-default-deps
+  goal (ADR-0001).
+
 ### Removed (BREAKING: pre-publication cleanup)
 - `MockEmbedder` removed from public API entirely. It was a 64-dim keyword-bag
   helper for testing routing math, not a real embedder, and its presence in the
