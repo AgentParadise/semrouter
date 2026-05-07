@@ -19,6 +19,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 use crate::config::RouterConfig;
+use crate::error::EvalSuiteError;
 use crate::embedding::{EmbeddingProvider, MockEmbedder};
 #[cfg(feature = "fastembed")]
 use crate::embedding::FastEmbedEmbedder;
@@ -78,6 +79,7 @@ impl std::fmt::Display for FailureReport {
 /// Reads `router.toml`, `routes.jsonl`, `eval.jsonl`, and optionally
 /// `thresholds.toml` from the given directory. Storage paths in `router.toml`
 /// are resolved relative to the fixture directory so the suite is self-contained.
+#[derive(Debug)]
 pub struct EvalSuite {
     dir: PathBuf,
     config: RouterConfig,
@@ -90,15 +92,14 @@ impl EvalSuite {
     /// Fails if `router.toml` is missing or malformed, or if `thresholds.toml`
     /// exists but cannot be parsed. A missing `thresholds.toml` is allowed and
     /// produces an all-`None` [`Thresholds`] (no checks enforced).
-    pub fn from_dir(dir: impl AsRef<Path>) -> Result<Self, String> {
+    pub fn from_dir(dir: impl AsRef<Path>) -> Result<Self, EvalSuiteError> {
         let dir = dir.as_ref().to_path_buf();
-        let config = RouterConfig::load(&dir.join("router.toml"))
-            .map_err(|e| format!("loading router.toml: {e}"))?;
+        let config = RouterConfig::load(&dir.join("router.toml"))?; // RouterError → EvalSuiteError via #[from]
         let thresholds_path = dir.join("thresholds.toml");
         let thresholds: Thresholds = if thresholds_path.exists() {
             let s = std::fs::read_to_string(&thresholds_path)
-                .map_err(|e| format!("reading thresholds.toml: {e}"))?;
-            toml::from_str(&s).map_err(|e| format!("parsing thresholds.toml: {e}"))?
+                .map_err(EvalSuiteError::ThresholdsRead)?;
+            toml::from_str(&s).map_err(EvalSuiteError::ThresholdsParse)?
         } else {
             Thresholds::default()
         };

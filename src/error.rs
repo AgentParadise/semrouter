@@ -40,3 +40,19 @@ impl From<toml::de::Error> for RouterError {
         RouterError::Config(e.to_string())
     }
 }
+
+/// Errors returned by `semrouter::testing::EvalSuite::from_dir`.
+#[derive(Debug, thiserror::Error)]
+pub enum EvalSuiteError {
+    /// Failed to load `router.toml` from the fixture directory.
+    #[error("loading router.toml: {0}")]
+    ConfigLoad(#[from] RouterError),
+
+    /// Failed to read `thresholds.toml` (file exists but unreadable).
+    #[error("reading thresholds.toml: {0}")]
+    ThresholdsRead(#[source] std::io::Error),
+
+    /// Failed to parse `thresholds.toml`.
+    #[error("parsing thresholds.toml: {0}")]
+    ThresholdsParse(#[source] toml::de::Error),
+}
