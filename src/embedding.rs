@@ -2,6 +2,7 @@ use crate::error::RouterError;
 
 // ── FastEmbedEmbedder ─────────────────────────────────────────────────────────
 
+/// Local ONNX embedder backed by `fastembed` (all-MiniLM-L6-v2, 384-dim).
 #[cfg(feature = "fastembed")]
 pub struct FastEmbedEmbedder {
     model: fastembed::TextEmbedding,
@@ -9,6 +10,7 @@ pub struct FastEmbedEmbedder {
 
 #[cfg(feature = "fastembed")]
 impl FastEmbedEmbedder {
+    /// Initialize the fastembed model, downloading the ONNX weights if needed.
     pub fn new() -> Result<Self, RouterError> {
         let model = fastembed::TextEmbedding::try_new(
             fastembed::InitOptions::new(fastembed::EmbeddingModel::AllMiniLML6V2)
@@ -41,8 +43,11 @@ impl EmbeddingProvider for FastEmbedEmbedder {
 
 // ── EmbeddingProvider trait ───────────────────────────────────────────────────
 
+/// Trait for types that can embed text into a fixed-dimensional float vector.
 pub trait EmbeddingProvider {
+    /// Embed a single text string and return a float vector.
     fn embed(&self, text: &str) -> Result<Vec<f32>, RouterError>;
+    /// Return the fixed dimension of the vectors produced by this embedder.
     fn dimension(&self) -> usize;
 }
 
@@ -123,6 +128,7 @@ const VOCAB: &[(&str, usize)] = &[
 
 const DIM: usize = 64;
 
+/// Deterministic keyword-bag embedder for tests; not suitable for production use.
 pub struct MockEmbedder;
 
 impl Default for MockEmbedder {
@@ -132,6 +138,7 @@ impl Default for MockEmbedder {
 }
 
 impl MockEmbedder {
+    /// Create a new `MockEmbedder`.
     pub fn new() -> Self {
         MockEmbedder
     }
@@ -184,6 +191,7 @@ fn fnv_hash(s: &str) -> u64 {
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
 
+/// Normalize a vector in-place to unit length; no-op if the norm is near zero.
 pub fn normalize(v: &mut [f32]) {
     let norm: f32 = v.iter().map(|x| x * x).sum::<f32>().sqrt();
     if norm > 1e-9 {
@@ -193,6 +201,7 @@ pub fn normalize(v: &mut [f32]) {
     }
 }
 
+/// Compute the dot product of two pre-normalized vectors (equivalent to cosine similarity).
 pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     debug_assert_eq!(a.len(), b.len(), "Embedding dimension mismatch");
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()

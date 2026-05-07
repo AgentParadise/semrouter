@@ -6,10 +6,14 @@ use std::collections::HashMap;
 /// Below this threshold the input is not considered a genuine confusion.
 const HN_SIMILARITY_THRESHOLD: f32 = 0.40;
 
+/// A route with its aggregate similarity score after optional hard-negative penalty.
 #[derive(Debug, Clone)]
 pub struct ScoredCandidate {
+    /// The route name.
     pub route: String,
+    /// Aggregate score after applying any hard-negative penalty.
     pub score: f32,
+    /// IDs of the top-k examples that contributed to this score.
     pub matched_example_ids: Vec<String>,
 }
 

@@ -2,15 +2,20 @@ use crate::error::RouterError;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+/// Top-level router configuration, deserialized from `router.toml`.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RouterConfig {
+    /// Core routing parameters (thresholds, model name, top-k, etc.).
     pub router: RouterSection,
+    /// File paths for the route corpus, hard negatives, logs, and index.
     #[serde(default)]
     pub storage: StorageSection,
+    /// Optional HTTP-embedder configuration (endpoint, model, provider name).
     #[serde(default)]
     pub embedding: EmbeddingSection,
 }
 
+/// Configuration for an optional HTTP embedding backend.
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct EmbeddingSection {
     /// HTTP provider name (e.g. "openai", "ollama"). Informational only.
@@ -21,32 +26,49 @@ pub struct EmbeddingSection {
     pub model: Option<String>,
 }
 
+/// Core routing knobs: thresholds, model name, similarity metric, and penalty.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RouterSection {
+    /// Human-readable name for this router instance.
     pub name: String,
+    /// Semantic version of the router configuration.
     pub version: String,
+    /// Embedding model identifier (e.g. `"fastembed/all-MiniLM-L6-v2"`).
     pub embedding_model: String,
+    /// Expected dimensionality of the embedding vectors.
     pub vector_dimension: usize,
+    /// Similarity metric to use; currently only `"cosine"` is supported.
     #[serde(default = "default_similarity")]
     pub similarity: String,
+    /// Number of top examples per route used to compute the aggregate score.
     #[serde(default = "default_top_k")]
     pub top_k: usize,
+    /// Minimum similarity score for a route to be accepted.
     #[serde(default = "default_minimum_score")]
     pub minimum_score: f32,
+    /// Minimum score margin between first and second candidate for acceptance.
     #[serde(default = "default_minimum_margin")]
     pub minimum_margin: f32,
+    /// Route name returned when no route clears the thresholds.
     #[serde(default = "default_fallback_route")]
     pub fallback_route: String,
+    /// Score penalty applied when a query is similar to a hard negative.
     #[serde(default = "default_hard_negative_penalty")]
     pub hard_negative_penalty: f32,
 }
 
+/// File paths used by the router for persistence and logging.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct StorageSection {
+    /// Path to the JSONL file containing route examples.
     pub routes_file: String,
+    /// Path to the JSONL file containing hard-negative examples.
     pub hard_negatives_file: String,
+    /// Path to the JSONL file where user feedback is appended.
     pub feedback_file: String,
+    /// Path to the JSONL file where routing decisions are logged.
     pub decision_log_file: String,
+    /// Directory for the binary embedding index.
     pub index_dir: String,
 }
 
@@ -82,12 +104,14 @@ impl Default for StorageSection {
 }
 
 impl RouterConfig {
+    /// Load and parse a `router.toml` file from the given path.
     pub fn load(path: &Path) -> Result<Self, RouterError> {
         let content = std::fs::read_to_string(path)?;
         let config: RouterConfig = toml::from_str(&content)?;
         Ok(config)
     }
 
+    /// Return a sensible default config suitable for testing with `MockEmbedder`.
     pub fn default_config() -> Self {
         RouterConfig {
             router: RouterSection {

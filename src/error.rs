@@ -1,11 +1,17 @@
 use std::fmt;
 
+/// Errors that can occur during router construction or routing.
 #[derive(Debug)]
 pub enum RouterError {
+    /// An I/O error reading a config or corpus file.
     Io(std::io::Error),
+    /// A JSON or TOML parse error.
     Parse(String),
+    /// A configuration value is invalid or missing.
     Config(String),
+    /// The embedding provider returned an error.
     Embedding(String),
+    /// The corpus contained no examples to route against.
     NoExamples,
 }
 

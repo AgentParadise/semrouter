@@ -2,12 +2,17 @@ use crate::config::RouterConfig;
 use crate::scoring::ScoredCandidate;
 use serde::{Deserialize, Serialize};
 
+/// The status of a routing decision.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DecisionStatus {
+    /// Top route's score and margin both met thresholds; safe to dispatch.
     Accepted,
+    /// Top route's score met threshold but margin to second-place was too small.
     Ambiguous,
+    /// Top route's score was below `minimum_score`.
     BelowThreshold,
+    /// No examples loaded, or other state where no opinion can be formed.
     NeedsReview,
 }
 
@@ -18,29 +23,44 @@ impl std::fmt::Display for DecisionStatus {
     }
 }
 
+/// A single route candidate with its aggregate score and matched example IDs.
 #[derive(Debug, Serialize, Clone)]
 pub struct CandidateOutput {
+    /// The route name.
     pub route: String,
+    /// Aggregate similarity score (0.0–1.0) for this route.
     pub score: f32,
+    /// IDs of the top-k examples that contributed to this score.
     pub matched_examples: Vec<String>,
 }
 
+/// Confidence metrics for the top-scoring route.
 #[derive(Debug, Serialize, Clone)]
 pub struct ConfidenceOutput {
+    /// Similarity score of the top-ranked route.
     pub top_score: f32,
+    /// Similarity score of the second-ranked route, if present.
     pub second_score: Option<f32>,
+    /// Difference between top and second scores (`top_score - second_score`).
     pub margin: Option<f32>,
 }
 
+/// The full output of a routing call.
 #[derive(Debug, Serialize, Clone)]
 pub struct RouteDecision {
+    /// The original input text that was routed.
     pub input: String,
+    /// The route name selected by the classifier, if status is `Accepted`.
     pub selected_route: Option<String>,
+    /// Status of the decision (Accepted / Ambiguous / BelowThreshold / NeedsReview).
     pub status: DecisionStatus,
+    /// Confidence metrics: top score, second score, and margin between them.
     pub confidence: ConfidenceOutput,
+    /// All candidate routes ranked by score with their matched example IDs.
     pub candidates: Vec<CandidateOutput>,
 }
 
+/// Apply config thresholds to scored candidates and produce a [`RouteDecision`].
 pub fn make_decision(
     input: &str,
     candidates: Vec<ScoredCandidate>,

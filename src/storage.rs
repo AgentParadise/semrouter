@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
+/// Load route examples from a JSONL file, skipping blank lines and `//` comments.
 pub fn load_examples(path: &Path) -> Result<Vec<RouteExample>, RouterError> {
     let file = std::fs::File::open(path)?;
     let reader = BufReader::new(file);
@@ -26,6 +27,7 @@ pub fn load_examples(path: &Path) -> Result<Vec<RouteExample>, RouterError> {
     Ok(examples)
 }
 
+/// Embed a list of raw route examples, returning them with normalized vectors.
 pub fn embed_examples(
     examples: Vec<RouteExample>,
     embedder: &dyn EmbeddingProvider,
@@ -43,6 +45,7 @@ pub fn embed_examples(
         .collect()
 }
 
+/// Load hard-negative examples from a JSONL file; returns an empty vec if the file is absent.
 pub fn load_hard_negatives(path: &Path) -> Result<Vec<HardNegative>, RouterError> {
     if !path.exists() {
         return Ok(vec![]);
@@ -64,6 +67,7 @@ pub fn load_hard_negatives(path: &Path) -> Result<Vec<HardNegative>, RouterError
     Ok(hns)
 }
 
+/// Embed a list of raw hard negatives, returning them with normalized vectors.
 pub fn embed_hard_negatives(
     hns: Vec<HardNegative>,
     embedder: &dyn EmbeddingProvider,
@@ -77,6 +81,7 @@ pub fn embed_hard_negatives(
         .collect()
 }
 
+/// Persist a corpus of embedded examples as a binary index under `index_dir`.
 pub fn save_binary_index(
     examples: &[EmbeddedExample],
     index_dir: &Path,
@@ -111,14 +116,20 @@ pub fn save_binary_index(
     Ok(())
 }
 
+/// Metadata written alongside a binary embedding index.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BinaryIndexManifest {
+    /// Schema version of the binary index format.
     pub version: String,
+    /// Number of examples stored in the index.
     pub example_count: usize,
+    /// Dimensionality of each embedding vector.
     pub vector_dimension: usize,
+    /// ISO-8601 timestamp of when this index was created.
     pub created_at: String,
 }
 
+/// Load a previously saved binary index from `index_dir`.
 pub fn load_binary_index(index_dir: &Path) -> Result<Vec<EmbeddedExample>, RouterError> {
     let embeddings_path = index_dir.join("embeddings.f32");
     let examples_path = index_dir.join("examples.json");
