@@ -37,7 +37,7 @@ required-features = ["cli", "fastembed"]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"
-toml = "0.8"
+toml = "1.1"
 
 # Optional — opt in via features. Lean default keeps the dep tree small for
 # library consumers who bring their own EmbeddingProvider.
