@@ -41,7 +41,7 @@ toml = "0.8"
 
 # Optional — opt in via features. Lean default keeps the dep tree small for
 # library consumers who bring their own EmbeddingProvider.
-fastembed = { version = "4", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries"], optional = true }
+fastembed = { version = "5", default-features = false, features = ["hf-hub-rustls-tls", "ort-download-binaries"], optional = true }
 clap = { version = "4", features = ["derive"], optional = true }
 
 [features]
