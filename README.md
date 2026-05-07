@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/banner.png" alt="semrouter — Semantic Routing Engine" />
+</p>
+
 # semrouter
 
 [![CI](https://github.com/AgentParadise/semrouter/actions/workflows/ci.yml/badge.svg)](https://github.com/AgentParadise/semrouter/actions/workflows/ci.yml)

@@ -25,6 +25,7 @@ exclude = [
     "router.toml",
     "tests/fixtures/voice-assistant/",
     "tests/fixtures/minimal/",
+    "assets/",
 ]
 
 [[bin]]
