@@ -68,3 +68,29 @@ jobs:
           key: fastembed-AllMiniLML6V2-v1
       - run: cargo build --no-default-features --features fastembed
       - run: cargo test --no-default-features --features fastembed --release
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Cache fastembed model
+        uses: actions/cache@v4
+        with:
+          path: .fastembed_cache
+          key: fastembed-AllMiniLML6V2-v1
+      - name: Run coverage
+        run: |
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --all-features --workspace --release \
+            --ignore-filename-regex '(examples|tests/fixtures)/' \
+            --summary-only --fail-under-lines 70 \
+            -- --include-ignored
+      - name: Print coverage summary
+        if: always()
+        run: cargo llvm-cov report --summary-only
