@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/banner.png" alt="semrouter — Semantic Routing Engine" />
+  <img src="https://raw.githubusercontent.com/AgentParadise/semrouter/main/assets/banner-v1.png" alt="semrouter — Semantic Routing Engine" />
 </p>
 
 # semrouter
